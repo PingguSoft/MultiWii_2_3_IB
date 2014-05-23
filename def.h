@@ -26,6 +26,7 @@
   #define NMEA
   #define VBAT
   #define BUZZER
+  #define PILOTLAMP
 
 #if 0
   /* for V BAT monitoring
@@ -83,7 +84,7 @@
 
 /* if you want to preset min/middle/max values for servos right after flashing, because of limited physical
  * room for servo travel, then you must enable and set all three following options */
- #define SERVO_MIN  {1000, 1000, 1020, 1020, 1020, 1020, 1020, 1020}
+ #define  SERVO_MIN {1000, 1000, 1020, 1020, 1020, 1020, 1020, 1020}
  #define  SERVO_MAX {2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000}
  #define  SERVO_MID {1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500} // (*)
 #endif
