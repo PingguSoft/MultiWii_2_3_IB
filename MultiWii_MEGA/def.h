@@ -5,6 +5,8 @@
 /***************             test configurations                   ********************/
 /**************************************************************************************/
 #if defined(INTERBOARD_MULTIWII)
+  #undef  MEGA_HW_PWM_SERVOS
+  
   #define QUADX
   #define I2C_SPEED 400000L
   #define MPU6050       //combo + ACC
@@ -14,12 +16,8 @@
   #define FORCE_ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  =  Y; imu.accADC[PITCH]  = -X; imu.accADC[YAW]  = Z;}
   #define FORCE_GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  X; imu.gyroADC[PITCH] =  Y; imu.gyroADC[YAW] = -Z;}
   #define FORCE_MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  = -Y; imu.magADC[PITCH]  =  X; imu.magADC[YAW]  = -Z;}
-//  #define ACC_ORIENTATION(X, Y, Z)  {accADC[ROLL]  =  Y; accADC[PITCH]  = -X; accADC[YAW]  = Z;}
-//  #define GYRO_ORIENTATION(X, Y, Z) {gyroADC[ROLL] =  X; gyroADC[PITCH] =  Y; gyroADC[YAW] = -Z;}
-//  #define MAG_ORIENTATION(X, Y, Z)  {magADC[ROLL]  = -Y; magADC[PITCH]  =  X; magADC[YAW]  = -Z;}
 
   #define FAILSAFE
-
 
   #define GPS_SERIAL 1
   #define GPS_BAUD   115200
@@ -39,18 +37,20 @@
   #define VBATSCALE        55 // (*) change this value if readed Battery voltage is different than real voltage
 
   #define V_BATPIN A0
-
-  #undef MEGA_HW_PWM_SERVOS
 #endif
 
+// LCD
+
   #define OLED_I2C_128x64
-//  #define SUPPRESS_OLED_I2C_128x64LOGO
   #define DISPLAY_FONT_DSIZE
 
-//  #define LCD_CONF
+  #define SUPPRESS_OLED_I2C_128x64LOGO
+  #define LCD_CONF
   #define LCD_TELEMETRY
   #define LCD_TELEMETRY_STEP "0123456789"
+#endif
 
+// SERVO
   #define SERVO_TILT
 
   #define TILT_PITCH_MIN    1020    //servo travel min, don't set it below 1020
@@ -64,8 +64,15 @@
   #define TILT_ROLL_MIDDLE  1500
   #define TILT_ROLL_PROP    10
   #define TILT_ROLL_AUX_CH  AUX4    //AUX channel to overwrite CAM Roll (AUX1-AUX4), comment to disable manual input and free the AUX channel
+  
+  /* if you want to preset min/middle/max values for servos right after flashing, because of limited physical
+   * room for servo travel, then you must enable and set all three following options */
+  #define SERVO_MIN {1000, 1000, 1020, 1020, 1020, 1020, 1020, 1020}
+  #define SERVO_MAX {2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000}
+  #define SERVO_MID {1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500} // (*)
 
 
+// SONAR
   /* Generic sonar: hc-sr04, srf04, dyp-me007, all generic sonar with echo/pulse pin
      default pulse is PH6/12, echo is PB4/11
   */
@@ -83,12 +90,6 @@
   #define SONAR_BARO_FUSION_LC 150 //cm, baro/sonar readings fusion, low cut, below = full sonar
   #define SONAR_BARO_FUSION_HC 300 //cm, baro/sonar readings fusion, high cut, above = full baro
   #define SONAR_BARO_FUSION_RATIO 0.0 //0.0-1.0,  baro/sonar readings fusion, amount of each sensor value, 0 = proportionnel between LC and HC
-
-/* if you want to preset min/middle/max values for servos right after flashing, because of limited physical
- * room for servo travel, then you must enable and set all three following options */
- #define  SERVO_MIN {1000, 1000, 1020, 1020, 1020, 1020, 1020, 1020}
- #define  SERVO_MAX {2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000}
- #define  SERVO_MID {1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500} // (*)
 #endif
 
 #if defined(SONAR_GENERIC_ECHOPULSE)

@@ -10,10 +10,10 @@
   #define MPU6050       //combo + ACC
   #define MPU6050_LPF_42HZ
   //#define MS561101BA
-  //#define HMC5883
+  #define HMC5883
   #define FORCE_ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  =  Y; imu.accADC[PITCH]  = -X; imu.accADC[YAW]  = Z;}
   #define FORCE_GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  X; imu.gyroADC[PITCH] =  Y; imu.gyroADC[YAW] = -Z;}
-  #define FORCE_MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  = -Y; imu.magADC[PITCH]  =  X; imu.magADC[YAW]  = -Z;}
+  #define FORCE_MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  Y; imu.magADC[PITCH]  = -X; imu.magADC[YAW]  = -Z;}
   #define FAILSAFE
   #define BUZZER
 
