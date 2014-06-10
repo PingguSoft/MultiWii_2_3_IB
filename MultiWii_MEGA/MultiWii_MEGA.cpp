@@ -49,7 +49,7 @@ const char boxnames[] PROGMEM = // names for dynamic generation of config GUI
     "ANGLE;"
     "HORIZON;"
   #endif
-  #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
+  #if (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
     "BARO;"
   #endif
   #ifdef VARIOMETER
@@ -100,7 +100,7 @@ const uint8_t boxids[] PROGMEM = {// permanent IDs associated to boxes. This way
     1, //"ANGLE;"
     2, //"HORIZON;"
   #endif
-  #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
+  #if (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
     3, //"BARO;"
   #endif
   #ifdef VARIOMETER
@@ -980,7 +980,7 @@ void loop () {
       if (f.ANGLE_MODE || f.HORIZON_MODE) {STABLEPIN_ON;} else {STABLEPIN_OFF;}
     #endif
 
-    #if BARO
+    #if (BARO || SONAR)
       #if (!defined(SUPPRESS_BARO_ALTHOLD))
         if (rcOptions[BOXBARO]) {
           if (!f.BARO_MODE) {
@@ -1103,7 +1103,7 @@ void loop () {
         #endif
       case 2:
         taskOrder++;
-        #if BARO
+        #if (BARO || SONAR)
           if (getEstimatedAltitude() !=0) break;
         #endif
       case 3:
@@ -1163,7 +1163,7 @@ void loop () {
     } else magHold = att.heading;
   #endif
 
-  #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
+  #if (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
     /* Smooth alt change routine , for slow auto and aerophoto modes (in general solution from alexmos). It's slowly increase/decrease
      * altitude proportional to stick movement (+/-100 throttle gives about +/-50 cm in 1 second with cycle time about 3-4ms)
      */

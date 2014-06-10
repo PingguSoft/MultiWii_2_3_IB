@@ -293,12 +293,14 @@ uint8_t getEstimatedAltitude(){
     alt.EstAlt = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 夷뎤)
   #elif SONAR && !BARO  //sonar alone
     // LOG: for now, keep the last good reading and no more than max alt
-    if(sonarAlt <0 || sonarAlt> SONAR_MAX_HOLD) sonarAlt = lastSonarAlt;
-    else lastSonarAlt = sonarAlt;
+    if(sonarAlt <0 || sonarAlt> SONAR_MAX_HOLD)
+      sonarAlt = lastSonarAlt;
+    else
+      lastSonarAlt = sonarAlt;
 
     // LOG: need for LPF ? if yes, value ?
     // LOG: trying 1/9 ratio (a little sloppy if using same pid than baro, need more agressive pid)
-    alt.EstAlt = alt.EstAlt*0.1f + sonarAlt*0.9f;
+    alt.EstAlt = alt.EstAlt * SONAR_BARO_LPF_LC + sonarAlt * (1 - SONAR_BARO_LPF_LC);
   #elif SONAR && BARO  //fusion
     // LOG: I would like some manually way to set offset....
     // LOG: if you take off from a chair/desk/something higher than the "real" ground, when switching to sonar and low cut fusion
@@ -306,30 +308,37 @@ uint8_t getEstimatedAltitude(){
     if(!f.ARMED) { //init offset till motors not armed
       BaroHome = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // play with optimal coef. here
     }
-    debug[3] = BaroHome;
-    if(sonarAlt <0 || sonarAlt> SONAR_MAX_HOLD) sonarAlt = lastSonarAlt;
-    else lastSonarAlt = sonarAlt;
 
-    if(sonarAlt < SONAR_BARO_FUSION_LC) {
+    if(sonarAlt < 0 || sonarAlt > SONAR_MAX_HOLD)
+      sonarAlt = lastSonarAlt;
+    else
+      lastSonarAlt = sonarAlt;
+
+    debug[2] = sonarAlt;
+    debug[3] = BaroHome;
+
+    if(sonarAlt > 0 && sonarAlt < SONAR_BARO_FUSION_LC) {
       // LOG: same as sonar alone
       // LOG: need for LPF ? if yes, value ?
       // LOG: trying 1/9 ratio (same as sonar alone, and as we share same pid conf than baro, we can't have two separate config, 1/9 is too much for my config, need raw values)
-      alt.EstAlt = alt.EstAlt*0.1f + (BaroHome+sonarAlt)*0.9f;
-   } else if(sonarAlt < SONAR_BARO_FUSION_HC) {
+//      alt.EstAlt = alt.EstAlt*0.1f + (BaroHome+sonarAlt)*0.9f;
+      alt.EstAlt = alt.EstAlt * SONAR_BARO_LPF_LC + (BaroHome + sonarAlt) * (1 - SONAR_BARO_LPF_LC);
+   } else if(sonarAlt > 0 && sonarAlt < SONAR_BARO_FUSION_HC) {
 
       float fade = SONAR_BARO_FUSION_RATIO;
-      if(fade==0.0) fade = ((float)(SONAR_BARO_FUSION_HC-sonarAlt))/(SONAR_BARO_FUSION_HC-SONAR_BARO_FUSION_LC);
+      if(fade==0.0)
+        fade = ((float)(SONAR_BARO_FUSION_HC-sonarAlt))/(SONAR_BARO_FUSION_HC-SONAR_BARO_FUSION_LC);
       fade = constrain(fade, 0.0f, 1.0f);
 
       // LOG: will LPF should be faded too ? sonar is less sloppy than baro and will be oversmoothed
       // LOG: try same as baro alone 6/4 ratio (same as above about smoothing)
-      alt.EstAlt = alt.EstAlt*0.6f + ((BaroHome+sonarAlt)*fade + (BaroAlt)*(1-fade))*0.4f;
+      alt.EstAlt = alt.EstAlt * SONAR_BARO_LPF_HC + ((BaroHome + sonarAlt) * fade +
+        (BaroAlt) * (1 - fade)) * (1 - SONAR_BARO_LPF_HC);
     } else {
       // LOG:same as baro
       alt.EstAlt = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 µs)
     }
   #endif
-
   debug[1] = AltHold;
 
   #if (defined(VARIOMETER) && (VARIOMETER != 2)) || !defined(SUPPRESS_BARO_ALTHOLD)

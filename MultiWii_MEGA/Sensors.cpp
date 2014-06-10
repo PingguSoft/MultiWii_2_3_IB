@@ -1787,10 +1787,19 @@ sonarAlt = srf08_ctx.range[0]; //tmp
 volatile unsigned long SONAR_GEP_startTime = 0;
 volatile unsigned long SONAR_GEP_echoTime = 0;
 volatile static int32_t  tempSonarAlt=0;
+static unsigned long lastPing = 0;
 
 void Sonar_update()
 {
+  long diffEcho = micros() - SONAR_GEP_startTime;
+  long diffPing = millis() - lastPing;
+
+  if (diffEcho >= SONAR_GENERIC_MAX_RANGE * SONAR_GENERIC_SCALE)
+    sonarAlt = -1;
+  else
     sonarAlt=tempSonarAlt;
+
+  if (diffPing > 60) {
     /*static int32_t sonarTempDistance=0;
     sonarTempDistance = (sonarTempDistance - (sonarTempDistance >> 3)) + sonarAlt;
     sonarAlt= sonarTempDistance >> 3;*/
@@ -1799,6 +1808,8 @@ void Sonar_update()
     SONAR_GEP_TriggerPin_PIN_HIGH;
     delayMicroseconds(10);
     SONAR_GEP_TriggerPin_PIN_LOW;
+    lastPing = millis();
+  }
 }
 
 void Sonar_init()

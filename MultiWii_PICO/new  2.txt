@@ -1,0 +1,307 @@
+--- config.h   Fri Jul 05 19:59:26 2013
++++ config.h   Fri Jul 05 20:54:31 2013
+@@ -180,6 +180,13 @@
+       //#define SRF10
+       //#define SRF23
+ 
++      /* Generic sonar: hc-sr04, srf04, dyp-me007, all generic sonar with echo/pulse pin 
++         default pulse is PH6/12, echo is PB4/11
++      */
++      #define SONAR_GENERIC_ECHOPULSE 
++      #define SONAR_GENERIC_SCALE 58 //scale for ranging conversion (hcsr04 is 58)
++      #define SONAR_GENERIC_MAX_RANGE 500 //cm (could be more)
++
+       /* ADC accelerometer */ // for 5DOF from sparkfun, uses analog PIN A1/A2/A3
+       //#define ADCACC
+ 
+@@ -608,6 +615,17 @@
+     /* adopt the flasher pattern for landing light LEDs */
+     //#define LANDING_LIGHTS_ADOPT_LED_FLASHER_PATTERN
+ 
++    
++    /************************* Sonar alt hold / precision / ground collision keeper *******/
++    #define SONAR_MAX_HOLD 400 //cm, kind of error delimiter, for now to avoid rocket climbing, only usefull if no baro
++
++    //if using baro + sonar       
++    #define SONAR_BARO_FUSION_LC 150 //cm, baro/sonar readings fusion, low cut, below = full sonar
++    #define SONAR_BARO_FUSION_HC 280 //cm, baro/sonar readings fusion, high cut, above = full baro
++    #define SONAR_BARO_FUSION_RATIO 0.0 //0.0-1.0,  baro/sonar readings fusion, amount of each sensor value, 0 = proportionnel between LC and HC
++    #define SONAR_BARO_LPF_LC 0.9f 
++    #define SONAR_BARO_LPF_HC 0.9f
++    
+   /*************************    INFLIGHT ACC Calibration    *****************************/
+     /* This will activate the ACC-Inflight calibration if unchecked */
+     //#define INFLIGHT_ACC_CALIBRATION
+--- def.h   Thu Apr 04 09:51:11 2013
++++ def.h   Fri Jul 05 20:56:25 2013
+@@ -1452,6 +1452,19 @@
+   #undef INTERNAL_I2C_PULLUPS
+ #endif
+ 
++#if defined(SONAR_GENERIC_ECHOPULSE)
++  #define SONAR_GEP_TriggerPin             12
++  #define SONAR_GEP_TriggerPin_PINMODE_OUT pinMode(SONAR_GEP_TriggerPin,OUTPUT);
++  #define SONAR_GEP_TriggerPin_PIN_HIGH    PORTB |= 1<<6;
++  #define SONAR_GEP_TriggerPin_PIN_LOW     PORTB &= ~(1<<6);
++  #define SONAR_GEP_EchoPin                11
++  #define SONAR_GEP_EchoPin_PINMODE_IN     pinMode(SONAR_GEP_EchoPin,INPUT);
++  #define SONAR_GEP_EchoPin_PCINT          PCINT5
++  #define SONAR_GEP_EchoPin_PCICR          PCICR |= (1<<PCIE0); // PCINT 0-7 belong to PCIE0
++  #define SONAR_GEP_EchoPin_PCMSK          PCMSK0 = (1<<SONAR_GEP_EchoPin_PCINT); // Mask Pin PCINT5 - all other PIns PCINT0-7 are not allowed to create interrupts!
++  #define SONAR_GEP_EchoPin_PCINT_vect     PCINT0_vect  // PCINT0-7 belog PCINT0_vect
++  #define SONAR_GEP_EchoPin_PIN            PINB  // PCINT0-7 belong to PINB
++#endif
+ /**************************************************************************************/
+ /***************              Sensor Type definitions              ********************/
+ /**************************************************************************************/
+@@ -1492,7 +1505,7 @@
+   #define GPS 0
+ #endif
+ 
+-#if defined(SRF02) || defined(SRF08) || defined(SRF10) || defined(SRC235) || defined(TINY_GPS_SONAR)
++#if defined(SRF02) || defined(SRF08) || defined(SRF10) || defined(SRC235) || defined(TINY_GPS_SONAR) || defined(SONAR_GENERIC_ECHOPULSE)
+   #define SONAR 1
+ #else
+   #define SONAR 0
+--- IMU.ino   Thu Apr 04 09:51:11 2013
++++ IMU.ino   Fri Jul 05 21:01:21 2013
+@@ -260,7 +260,7 @@
+     value += deadband;                  \
+   }
+ 
+-#if BARO
++#if BARO || SONAR
+ uint8_t getEstimatedAltitude(){
+   static uint32_t deadLine;
+   static int32_t baroGroundPressure;
+@@ -272,6 +272,7 @@
+   if (dTime < UPDATE_INTERVAL) return 0;
+   previousT = currentT;
+ 
++  #if BARO
+   if(calibratingB > 0) {
+     baroGroundPressure = baroPressureSum/(BARO_TAB_SIZE - 1);
+     calibratingB--;
+@@ -281,8 +282,52 @@
+   // baroGroundPressure is not supposed to be 0 here
+   // see: https://code.google.com/p/ardupilot-mega/source/browse/libraries/AP_Baro/AP_Baro.cpp
+   BaroAlt = log( baroGroundPressure * (BARO_TAB_SIZE - 1)/ (float)baroPressureSum ) * (baroTemperature+27315) * 29.271267f; // in cemtimeter 
+-
+-  EstAlt = (EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 µs)
++  #endif
++  
++  #if SONAR
++  static int16_t lastSonarAlt = 0;
++  #endif
++  #if BARO && !SONAR //baro alone
++     EstAlt = (EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 µs)
++  #elif SONAR && !BARO  //sonar alone
++    // LOG: for now, keep the last good reading and no more than max alt
++    if(sonarAlt <0 || sonarAlt> SONAR_MAX_HOLD) sonarAlt = lastSonarAlt;
++    else lastSonarAlt = sonarAlt;
++    
++    // LOG: need for LPF ? if yes, value ?
++    EstAlt = EstAlt*SONAR_BARO_LPF_LC + sonarAlt*(1-SONAR_BARO_LPF_LC);
++  #elif SONAR && BARO  //fusion
++    // LOG: I would like some manually way to set offset....
++    // LOG: if you take off from a chair/desk/something higher than the "real" ground, when switching to sonar and low cut fusion
++    // LOG: the home offset will be higher than the ground and maybe mess up things...
++    if(!f.ARMED) { //init offset till motors not armed
++      BaroHome = (EstAlt * 6 + BaroAlt * 2) >> 3; // play with optimal coef. here
++    }
++    debug[3] = BaroHome;
++    if(sonarAlt <0 || sonarAlt> SONAR_MAX_HOLD) sonarAlt = lastSonarAlt;
++    else lastSonarAlt = sonarAlt;
++    
++    if(sonarAlt < SONAR_BARO_FUSION_LC) {
++      // LOG: same as sonar alone
++      // LOG: need for LPF ? if yes, value ?
++      // LOG: trying 1/9 ratio (same as sonar alone, and as we share same pid conf than baro, we can't have two separate config, 1/9 is too much for my config, need raw values)
++      EstAlt = EstAlt*SONAR_BARO_LPF_LC + (BaroHome+sonarAlt)*(1-SONAR_BARO_LPF_LC);
++   } else if(sonarAlt < SONAR_BARO_FUSION_HC) {
++        
++      float fade = SONAR_BARO_FUSION_RATIO;
++      if(fade==0.0) fade = ((float)(SONAR_BARO_FUSION_HC-sonarAlt))/(SONAR_BARO_FUSION_HC-SONAR_BARO_FUSION_LC);
++      fade = constrain(fade, 0.0f, 1.0f);
++        
++      // LOG: will LPF should be faded too ? sonar is less sloppy than baro and will be oversmoothed
++      // LOG: try same as baro alone 6/4 ratio (same as above about smoothing)
++      EstAlt = EstAlt*SONAR_BARO_LPF_HC + ((BaroHome+sonarAlt)*fade + (BaroAlt)*(1-fade))*(1-SONAR_BARO_LPF_HC);
++    } else {
++      // LOG:same as baro
++      EstAlt = (EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 µs)
++    }
++  #endif
++  
++  debug[1] = AltHold;
+ 
+   #if (defined(VARIOMETER) && (VARIOMETER != 2)) || !defined(SUPPRESS_BARO_ALTHOLD)
+     //P
+--- LCD.ino   Thu Apr 04 09:51:11 2013
++++ LCD.ino   Fri Jul 05 21:02:46 2013
+@@ -802,7 +802,7 @@
+ const char PROGMEM lcd_param_text08 [] = "Yaw      P";
+ const char PROGMEM lcd_param_text09 [] = "Yaw      I";
+ const char PROGMEM lcd_param_text10 [] = "Yaw      D";
+-#if  BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
++#if  (BARO||SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+ const char PROGMEM lcd_param_text11 [] = "Alt      P";
+ const char PROGMEM lcd_param_text12 [] = "Alt      I";
+ const char PROGMEM lcd_param_text13 [] = "Alt      D";
+@@ -943,7 +943,7 @@
+   &lcd_param_text08, &conf.P8[YAW], &__P,
+   &lcd_param_text09, &conf.I8[YAW], &__I,
+   &lcd_param_text10, &conf.D8[YAW], &__D,
+-#if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
++#if (BARO||SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+   &lcd_param_text11, &conf.P8[PIDALT], &__P,
+   &lcd_param_text12, &conf.I8[PIDALT], &__I,
+   &lcd_param_text13, &conf.D8[PIDALT], &__D,
+@@ -987,7 +987,7 @@
+       &lcd_param_text42, &conf.activate[BOXHORIZON], &__AUX4,
+     #endif
+   #endif
+-  #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
++  #if (BARO||SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+     &lcd_param_text43, &conf.activate[BOXBARO], &__AUX1,
+     &lcd_param_text43, &conf.activate[BOXBARO], &__AUX2,
+     #ifndef SUPPRESS_LCD_CONF_AUX34
+@@ -1600,7 +1600,7 @@
+     #if ACC
+       "Ang","Hor",
+     #endif
+-    #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
++    #if (BARO||SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+       "Bar",
+     #endif
+     #ifdef VARIOMETER
+@@ -1943,7 +1943,7 @@
+           }
+           break;
+         case 6:// height
+-          #if BARO
++          #if (BARO||SONAR)
+              {
+                int16_t h = BaroAlt / 100;
+                LCDprint('A'); lcdprint_int16(h); LCDprint('m');
+@@ -2229,7 +2229,7 @@
+       //Reset logvalues
+       cycleTimeMax = 0;
+       cycleTimeMin = 65535;
+-      #if BARO
++      #if (BARO||SONAR)
+         #if defined(LOG_VALUES)
+           BAROaltMax = 0;
+         #endif
+--- MultiWii.ino   Sun Jun 09 14:55:21 2013
++++ MultiWii.ino   Fri Jul 05 21:04:33 2013
+@@ -62,7 +62,7 @@
+     BOXANGLE,
+     BOXHORIZON,
+   #endif
+-  #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
++  #if (BARO||SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+     BOXBARO,
+   #endif
+   #ifdef VARIOMETER
+@@ -114,7 +114,7 @@
+     "ANGLE;"
+     "HORIZON;"
+   #endif
+-  #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
++  #if (BARO||SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+     "BARO;"
+   #endif
+   #ifdef VARIOMETER
+@@ -225,6 +225,7 @@
+ static uint8_t  vbatMin = VBATNOMINAL;  // lowest battery voltage in 0.1V steps
+ static uint8_t  rcOptions[CHECKBOXITEMS];
+ static int32_t  BaroAlt,EstAlt,AltHold; // in cm
++static int32_t  BaroHome=0;
+ static int16_t  BaroPID = 0;
+ static int16_t  errorAltitudeI = 0;
+ static int16_t  vario = 0;              // variometer in cm/s
+@@ -1095,7 +1096,7 @@
+       if (f.ANGLE_MODE || f.HORIZON_MODE) {STABLEPIN_ON;} else {STABLEPIN_OFF;}
+     #endif
+ 
+-    #if BARO
++    #if (BARO||SONAR)
+       #if (!defined(SUPPRESS_BARO_ALTHOLD))
+         if (rcOptions[BOXBARO]) {
+             if (!f.BARO_MODE) {
+@@ -1209,7 +1210,7 @@
+         #endif
+       case 2:
+         taskOrder++;
+-        #if BARO
++        #if (BARO||SONAR)
+           if (getEstimatedAltitude() !=0) break;
+         #endif    
+       case 3:
+@@ -1275,7 +1276,7 @@
+     } else magHold = heading;
+   #endif
+ 
+-  #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
++  #if (BARO||SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+     if (f.BARO_MODE) {
+       static uint8_t isAltHoldChanged = 0;
+       #if defined(ALTHOLD_FAST_THROTTLE_CHANGE)
+--- Sensors.ino   Thu Apr 04 09:51:11 2013
++++ Sensors.ino   Fri Jul 05 21:06:43 2013
+@@ -1699,6 +1699,43 @@
+       tinygps_query();
+     }
+ }
++#elif defined(SONAR_GENERIC_ECHOPULSE) 
++
++volatile unsigned long SONAR_GEP_startTime = 0;
++volatile unsigned long SONAR_GEP_echoTime = 0;
++volatile static int32_t  tempSonarAlt=0;
++
++void Sonar_init()
++{
++  SONAR_GEP_EchoPin_PCICR;
++  SONAR_GEP_EchoPin_PCMSK;
++  SONAR_GEP_EchoPin_PINMODE_IN;
++  SONAR_GEP_TriggerPin_PINMODE_OUT;
++  Sonar_update();
++}
++
++ISR(SONAR_GEP_EchoPin_PCINT_vect) {
++  if (SONAR_GEP_EchoPin_PIN & (1<<SONAR_GEP_EchoPin_PCINT)) { 
++    SONAR_GEP_startTime = micros();
++  }
++  else {
++    SONAR_GEP_echoTime = micros() - SONAR_GEP_startTime;
++    if (SONAR_GEP_echoTime <= SONAR_GENERIC_MAX_RANGE*SONAR_GENERIC_SCALE)                                  
++      tempSonarAlt = SONAR_GEP_echoTime / SONAR_GENERIC_SCALE;
++    else
++      tempSonarAlt = -1;
++  }
++}
++
++void Sonar_update()
++{
++    sonarAlt=1+tempSonarAlt;
++    SONAR_GEP_TriggerPin_PIN_LOW;
++    delayMicroseconds(2);
++    SONAR_GEP_TriggerPin_PIN_HIGH;
++    delayMicroseconds(10);
++    SONAR_GEP_TriggerPin_PIN_LOW;
++}
+ #else
+ inline void Sonar_init() {}
+ inline void Sonar_update() {}
+--- Serial.ino   Thu Apr 04 09:51:11 2013
++++ Serial.ino   Fri Jul 05 21:07:16 2013
+@@ -286,7 +286,7 @@
+                    f.ANGLE_MODE<<BOXANGLE|
+                    f.HORIZON_MODE<<BOXHORIZON|
+                  #endif
+-                 #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
++                 #if (BARO||SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+                    f.BARO_MODE<<BOXBARO|
+                  #endif
+                  #if MAG

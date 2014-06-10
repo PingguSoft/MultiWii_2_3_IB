@@ -6,7 +6,7 @@
 /**************************************************************************************/
 #if defined(INTERBOARD_MULTIWII)
   #undef  MEGA_HW_PWM_SERVOS
-  
+
   #define QUADX
   #define I2C_SPEED 400000L
   #define MPU6050       //combo + ACC
@@ -22,25 +22,25 @@
   #define GPS_SERIAL 1
   #define GPS_BAUD   115200
   #define NMEA
-  #define VBAT
+  //#define UBLOX
   #define BUZZER
   #define PILOTLAMP
 
-#if 0
+#if 1
   /* for V BAT monitoring
    after the resistor divisor we should get [0V;5V]->[0;1023] on analog V_BATPIN
    with R1=47k and R2=10k
    vbat = [0;450]*16/VBATSCALE
    must be associated with #define BUZZER ! */
-
+  #define VBAT
   #undef  VBATSCALE
-  #define VBATSCALE        55 // (*) change this value if readed Battery voltage is different than real voltage
+  #define VBATSCALE        51 // (*) change this value if readed Battery voltage is different than real voltage
 
-  #define V_BATPIN A0
+//  #define V_BATPIN A0
 #endif
 
 // LCD
-
+#if 0
   #define OLED_I2C_128x64
   #define DISPLAY_FONT_DSIZE
 
@@ -57,19 +57,19 @@
   #define TILT_PITCH_MAX    2000    //servo travel max, max value=2000
   #define TILT_PITCH_MIDDLE 1500    //servo neutral value
   #define TILT_PITCH_PROP   10      //servo proportional (tied to angle) ; can be negative to invert movement
-  #define TILT_PITCH_AUX_CH AUX3    //AUX channel to overwrite CAM pitch (AUX1-AUX4), comment to disable manual input and free the AUX channel
+  #define TILT_PITCH_AUX_CH AUX4    //AUX channel to overwrite CAM pitch (AUX1-AUX4), comment to disable manual input and free the AUX channel
 
   #define TILT_ROLL_MIN     1020
   #define TILT_ROLL_MAX     2000
   #define TILT_ROLL_MIDDLE  1500
   #define TILT_ROLL_PROP    10
-  #define TILT_ROLL_AUX_CH  AUX4    //AUX channel to overwrite CAM Roll (AUX1-AUX4), comment to disable manual input and free the AUX channel
-  
+//#define TILT_ROLL_AUX_CH  AUX4    //AUX channel to overwrite CAM Roll (AUX1-AUX4), comment to disable manual input and free the AUX channel
+
   /* if you want to preset min/middle/max values for servos right after flashing, because of limited physical
    * room for servo travel, then you must enable and set all three following options */
-  #define SERVO_MIN {1000, 1000, 1020, 1020, 1020, 1020, 1020, 1020}
+  #define SERVO_MIN { 700, 1000, 1020, 1020, 1020, 1020, 1020, 1020}
   #define SERVO_MAX {2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000}
-  #define SERVO_MID {1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500} // (*)
+  #define SERVO_MID {1350, 1500, 1500, 1500, 1500, 1500, 1500, 1500} // (*)
 
 
 // SONAR
@@ -77,19 +77,21 @@
      default pulse is PH6/12, echo is PB4/11
   */
   #define SONAR_GENERIC_ECHOPULSE
-  #define SONAR_GENERIC_SCALE 58 //scale for ranging conversion (hcsr04 is 58)
-  #define SONAR_GENERIC_MAX_RANGE 500 //cm (could be more)
+  #define SONAR_GENERIC_SCALE       58 //scale for ranging conversion (hcsr04 is 58)
+  #define SONAR_GENERIC_MAX_RANGE   400 //cm (could be more)
 
   /************************* Sonar alt hold / precision / ground collision keeper *******/
   //#define SONAR_TILT_CORRECTION //correct ranging from quad inclinaison, may works or not, depends of beam shape, ultrasonic absorption, sensibility of environnement, etc...
   //will not be applyed if hypo is longer than max range of course and no more than 30/40째 correction
 
-  #define SONAR_MAX_HOLD 400 //cm, kind of error delimiter, for now to avoid rocket climbing, only usefull if no baro
+  #define SONAR_MAX_HOLD 380 //cm, kind of error delimiter, for now to avoid rocket climbing, only usefull if no baro
 
   //if using baro + sonar
-  #define SONAR_BARO_FUSION_LC 150 //cm, baro/sonar readings fusion, low cut, below = full sonar
+  #define SONAR_BARO_FUSION_LC 250 //cm, baro/sonar readings fusion, low cut, below = full sonar
   #define SONAR_BARO_FUSION_HC 300 //cm, baro/sonar readings fusion, high cut, above = full baro
   #define SONAR_BARO_FUSION_RATIO 0.0 //0.0-1.0,  baro/sonar readings fusion, amount of each sensor value, 0 = proportionnel between LC and HC
+  #define SONAR_BARO_LPF_LC 0.9f
+  #define SONAR_BARO_LPF_HC 0.9f
 #endif
 
 #if defined(SONAR_GENERIC_ECHOPULSE)

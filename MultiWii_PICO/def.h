@@ -10,7 +10,7 @@
   #define MPU6050       //combo + ACC
   #define MPU6050_LPF_42HZ
   //#define MS561101BA
-  #define HMC5883
+  //#define HMC5883
   #define FORCE_ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  =  Y; imu.accADC[PITCH]  = -X; imu.accADC[YAW]  = Z;}
   #define FORCE_GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  X; imu.gyroADC[PITCH] =  Y; imu.gyroADC[YAW] = -Z;}
   #define FORCE_MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  Y; imu.magADC[PITCH]  = -X; imu.magADC[YAW]  = -Z;}
@@ -32,6 +32,7 @@
 
   #define EXT_MOTOR_RANGE
   #define MOTOR_STOP
+  #define DEADBAND 24
 #endif
 
 #if defined(SONAR_GENERIC_ECHOPULSE)
@@ -240,12 +241,12 @@
     #define NUMBER_MOTOR   1
     #define PRI_SERVO_TO   7
   #endif
-  #if defined(FLAPS) 
-    #define PRI_SERVO_FROM   3 // use servo from 3 to 8    
+  #if defined(FLAPS)
+    #define PRI_SERVO_FROM   3 // use servo from 3 to 8
     #undef CAMTRIG             // Disable Camtrig on A2
   #else
     #define PRI_SERVO_FROM   4 // use servo from 4 to 8
-  #endif  
+  #endif
 #elif defined(BI)
   #define NUMBER_MOTOR     2
   #define PRI_SERVO_FROM   5 // use servo from 5 to 6
@@ -303,7 +304,7 @@
     #define LEDPIN_OFF                 PORTB &= ~(1<<5);
     #define LEDPIN_ON                  PORTB |= (1<<5);
   #endif
-  #if !defined(RCAUXPIN8) 
+  #if !defined(RCAUXPIN8)
     #if !defined(MONGOOSE1_0)
       #if defined(INTERBOARD_PICO_MULTIWII)
           #define BUZZERPIN_PINMODE          pinMode (A0, OUTPUT);
@@ -324,7 +325,7 @@
           #define BUZZERPIN_ON            PORTB |= 1;
           #define BUZZERPIN_OFF           PORTB &= ~1;
         #endif
-      #endif 
+      #endif
     #endif
   #else
     #define BUZZERPIN_PINMODE          ;
@@ -353,7 +354,7 @@
     #define STABLEPIN_PINMODE          ;
     #define STABLEPIN_ON               ;
     #define STABLEPIN_OFF              ;
-  #endif 
+  #endif
   #define PPM_PIN_INTERRUPT          attachInterrupt(0, rxInt, RISING); //PIN 0
   #define SPEK_SERIAL_PORT           0
   //RX PIN assignment inside the port //for PORTD
@@ -363,9 +364,9 @@
   #define YAWPIN                     6
   #define AUX1PIN                    7
   #define AUX2PIN                    0 // optional PIN 8 or PIN 12
-  #define AUX3PIN                    1 // unused 
-  #define AUX4PIN                    3 // unused 
-    
+  #define AUX3PIN                    1 // unused
+  #define AUX4PIN                    3 // unused
+
   #define PCINT_PIN_COUNT            5
   #define PCINT_RX_BITS              (1<<2),(1<<4),(1<<5),(1<<6),(1<<7)
   #define PCINT_RX_PORT              PORTD
@@ -375,12 +376,12 @@
   #define RX_PCINT_PIN_PORT          PIND
   #define V_BATPIN                   A3    // Analog PIN 3
   #define PSENSORPIN                 A2    // Analog PIN 2
-  
+
   #if defined(A0_A1_PIN_HEX) || (NUMBER_MOTOR > 6)
     #define SOFT_PWM_1_PIN_HIGH        PORTC |= 1<<0;
     #define SOFT_PWM_1_PIN_LOW         PORTC &= ~(1<<0);
     #define SOFT_PWM_2_PIN_HIGH        PORTC |= 1<<1;
-    #define SOFT_PWM_2_PIN_LOW         PORTC &= ~(1<<1);  
+    #define SOFT_PWM_2_PIN_LOW         PORTC &= ~(1<<1);
   #else
     #define SOFT_PWM_1_PIN_HIGH        PORTD |= 1<<5;
     #define SOFT_PWM_1_PIN_LOW         PORTD &= ~(1<<5);
@@ -391,7 +392,7 @@
   #define SOFT_PWM_3_PIN_LOW         PORTC &= ~(1<<2);
   #define SOFT_PWM_4_PIN_HIGH        PORTB |= 1<<4;
   #define SOFT_PWM_4_PIN_LOW         PORTB &= ~(1<<4);
-  
+
   #define SERVO_1_PINMODE            pinMode(A0,OUTPUT); // TILT_PITCH - WING left
   #define SERVO_1_PIN_HIGH           PORTC |= 1<<0;
   #define SERVO_1_PIN_LOW            PORTC &= ~(1<<0);
@@ -423,14 +424,14 @@
 /**************************  atmega32u4 (Promicro)  ***********************************/
 #if defined(PROMICRO)
   #if defined(MICROWII)
-    #define A32U4ALLPINS 
+    #define A32U4ALLPINS
   #endif
   #if !defined(TEENSY20)
     #define LEDPIN_PINMODE             //
     #define LEDPIN_TOGGLE              PIND |= 1<<5;     //switch LEDPIN state (Port D5)
     #if !defined(PROMICRO10)
       #define LEDPIN_OFF                 PORTD |= (1<<5);
-      #define LEDPIN_ON                  PORTD &= ~(1<<5);  
+      #define LEDPIN_ON                  PORTD &= ~(1<<5);
     #else
       #define LEDPIN_OFF                PORTD &= ~(1<<5);
       #define LEDPIN_ON                 PORTD |= (1<<5);
@@ -438,8 +439,8 @@
   #else
     #define LEDPIN_PINMODE           DDRD |= (1<<6);
     #define LEDPIN_OFF               PORTD &= ~(1<<6);
-    #define LEDPIN_ON                PORTD |= (1<<6);   
-    #define LEDPIN_TOGGLE            PIND |= 1<<6;     //switch LEDPIN state (Port D6)  
+    #define LEDPIN_ON                PORTD |= (1<<6);
+    #define LEDPIN_TOGGLE            PIND |= 1<<6;     //switch LEDPIN state (Port D6)
   #endif
   #if defined(D8BUZZER)
     #define BUZZERPIN_PINMODE          DDRB |= (1<<4);
@@ -448,9 +449,9 @@
       #define    PL_PIN_OFF           PORTB &= ~(1<<4);
     #else
       #define BUZZERPIN_ON               PORTB |= 1<<4;
-      #define BUZZERPIN_OFF              PORTB &= ~(1<<4); 
-    #endif 
-    
+      #define BUZZERPIN_OFF              PORTB &= ~(1<<4);
+    #endif
+
   #elif defined(A32U4ALLPINS)
     #define BUZZERPIN_PINMODE          DDRD |= (1<<4);
     #if defined PILOTLAMP
@@ -458,8 +459,8 @@
       #define    PL_PIN_OFF   PORTD &= ~(1<<4);
     #else
       #define BUZZERPIN_ON               PORTD |= 1<<4;
-      #define BUZZERPIN_OFF              PORTD &= ~(1<<4);  
-    #endif  
+      #define BUZZERPIN_OFF              PORTD &= ~(1<<4);
+    #endif
   #else
     #define BUZZERPIN_PINMODE          DDRD |= (1<<3);
     #if defined PILOTLAMP
@@ -467,7 +468,7 @@
       #define    PL_PIN_OFF   PORTD &= ~(1<<3);
     #else
       #define BUZZERPIN_ON               PORTD |= 1<<3;
-      #define BUZZERPIN_OFF              PORTD &= ~(1<<3); 
+      #define BUZZERPIN_OFF              PORTD &= ~(1<<3);
     #endif
   #endif
   #define POWERPIN_PINMODE           //
@@ -487,8 +488,8 @@
   #endif
   #define USB_CDC_TX                 3
   #define USB_CDC_RX                 2
-  
-  //soft PWM Pins  
+
+  //soft PWM Pins
   #define SOFT_PWM_1_PIN_HIGH        PORTD |= 1<<4;
   #define SOFT_PWM_1_PIN_LOW         PORTD &= ~(1<<4);
   #define SOFT_PWM_2_PIN_HIGH        PORTF |= 1<<5;
@@ -498,17 +499,17 @@
     #define SOFT_PWM_3_PIN_LOW         PORTF &= ~(1<<7);
     #define SOFT_PWM_4_PIN_HIGH        PORTF |= 1<<6;
     #define SOFT_PWM_4_PIN_LOW         PORTF &= ~(1<<6);
-    #define SW_PWM_P3                  A1        
+    #define SW_PWM_P3                  A1
     #define SW_PWM_P4                  A0
   #else
     #define SOFT_PWM_3_PIN_HIGH        PORTF |= 1<<4;
     #define SOFT_PWM_3_PIN_LOW         PORTF &= ~(1<<4);
     #define SOFT_PWM_4_PIN_HIGH        PORTF |= 1<<5;
-    #define SOFT_PWM_4_PIN_LOW         PORTF &= ~(1<<5); 
-    #define SW_PWM_P3                  A2        
-    #define SW_PWM_P4                  A3 
+    #define SOFT_PWM_4_PIN_LOW         PORTF &= ~(1<<5);
+    #define SW_PWM_P3                  A2
+    #define SW_PWM_P4                  A3
   #endif
-  
+
   // Servos
   #define SERVO_1_PINMODE   DDRF |= (1<<7); // A0
   #define SERVO_1_PIN_HIGH  PORTF|= 1<<7;
@@ -526,7 +527,7 @@
   #else
     #define SERVO_4_PINMODE   DDRF |= (1<<4); // A3
     #define SERVO_4_PIN_HIGH  PORTF |= 1<<4;
-    #define SERVO_4_PIN_LOW   PORTF &= ~(1<<4);  
+    #define SERVO_4_PIN_LOW   PORTF &= ~(1<<4);
   #endif
   #define SERVO_5_PINMODE   DDRC |= (1<<6); // 5
   #define SERVO_5_PIN_HIGH  PORTC|= 1<<6;
@@ -540,7 +541,7 @@
   #define SERVO_8_PINMODE   DDRB |= (1<<5); // 9
   #define SERVO_8_PIN_HIGH  PORTB |= 1<<5;
   #define SERVO_8_PIN_LOW   PORTB &= ~(1<<5);
-  
+
   //Standart RX
   #define THROTTLEPIN                  3
   #if defined(A32U4ALLPINS)
@@ -554,9 +555,9 @@
     #define YAWPIN                     2
     #define AUX1PIN                    6
   #endif
-  #define AUX2PIN                      7 
-  #define AUX3PIN                      1 // unused 
-  #define AUX4PIN                      0 // unused 
+  #define AUX2PIN                      7
+  #define AUX3PIN                      1 // unused
+  #define AUX4PIN                      0 // unused
   #if !defined(RCAUX2PIND17)
     #define PCINT_PIN_COUNT          4
     #define PCINT_RX_BITS            (1<<1),(1<<2),(1<<3),(1<<4)
@@ -578,9 +579,9 @@
     #define V_BATPIN                  A2    // Analog PIN 3
   #endif
   #if !defined(TEENSY20)
-    #define PSENSORPIN                A2    // Analog PIN 2 
+    #define PSENSORPIN                A2    // Analog PIN 2
   #else
-    #define PSENSORPIN                A2    // Analog PIN 2 
+    #define PSENSORPIN                A2    // Analog PIN 2
   #endif
 #endif
 
@@ -597,8 +598,8 @@
   #else
     #define BUZZERPIN_ON               PORTC |= 1<<5;
     #define BUZZERPIN_OFF              PORTC &= ~(1<<5);
-  #endif 
-    
+  #endif
+
   #if !defined(DISABLE_POWER_PIN)
     #define POWERPIN_PINMODE           pinMode (37, OUTPUT);
     #define POWERPIN_ON                PORTC |= 1<<0;
@@ -643,7 +644,7 @@
   #define PCIR_PORT_BIT              (1<<2)
   #define RX_PC_INTERRUPT            PCINT2_vect
   #define RX_PCINT_PIN_PORT          PINK
-  
+
   #define SERVO_1_PINMODE            pinMode(34,OUTPUT);pinMode(44,OUTPUT); // TILT_PITCH - WING left
   #define SERVO_1_PIN_HIGH           PORTC |= 1<<3;PORTL |= 1<<5;
   #define SERVO_1_PIN_LOW            PORTC &= ~(1<<3);PORTL &= ~(1<<5);
@@ -671,7 +672,7 @@
 #endif
 
 
-// special defines for the Mongose IMU board 
+// special defines for the Mongose IMU board
 // note: that may be moved to the IMU Orientations because this are board defines .. not Proc
 
 #if defined(MONGOOSE1_0)  // basically it's a PROMINI without some PINS => same code as a PROMINI board except PIN definition
@@ -679,8 +680,8 @@
   // http://www.multiwii.com/forum/viewtopic.php?f=6&t=627
   #define LEDPIN_PINMODE             pinMode (4, OUTPUT);
   #define LEDPIN_TOGGLE              PIND |= 1<<4;     //switch LEDPIN state (digital PIN 13)
-  #define LEDPIN_OFF                 PORTD &= ~(1<<4);  
-  #define LEDPIN_ON                  PORTD |= (1<<4);     
+  #define LEDPIN_OFF                 PORTD &= ~(1<<4);
+  #define LEDPIN_ON                  PORTD |= (1<<4);
   #define SPEK_BAUD_SET              UCSR0A  = (1<<U2X0); UBRR0H = ((F_CPU  / 4 / 115200 -1) / 2) >> 8; UBRR0L = ((F_CPU  / 4 / 115200 -1) / 2);
   #define SPEK_SERIAL_PORT           0
 
@@ -693,12 +694,12 @@
   #define POWERPIN_OFF               ;
   #define STABLEPIN_PINMODE          ; //
   #define STABLEPIN_ON               ;
-  #define STABLEPIN_OFF              ; 
+  #define STABLEPIN_OFF              ;
   #define PINMODE_LCD                ; //
   #define LCDPIN_OFF                 ;
-  #define LCDPIN_ON                  ; 
-  
-  
+  #define LCDPIN_ON                  ;
+
+
   #define SERVO_4_PINMODE            ;                   // Not available
   #define SERVO_4_PIN_HIGH           ;
   #define SERVO_4_PIN_LOW            ;
@@ -714,43 +715,43 @@
   #define SERVO_1_LOW SERVO_1_PIN_LOW
   #define SERVO_1_ARR_POS  0
 #endif
-#if (PRI_SERVO_FROM <= 2 && PRI_SERVO_TO >= 2) || (SEC_SERVO_FROM <= 2 && SEC_SERVO_TO >= 2) 
+#if (PRI_SERVO_FROM <= 2 && PRI_SERVO_TO >= 2) || (SEC_SERVO_FROM <= 2 && SEC_SERVO_TO >= 2)
   #undef LAST_LOW
   #define LAST_LOW SERVO_2_PIN_LOW
   #if !defined(SERVO_1_HIGH)
     #define SERVO_1_HIGH SERVO_2_PIN_HIGH
-    #define SERVO_1_LOW SERVO_2_PIN_LOW  
+    #define SERVO_1_LOW SERVO_2_PIN_LOW
     #define SERVO_1_ARR_POS 1
   #else
     #define SERVO_2_HIGH SERVO_2_PIN_HIGH
-    #define SERVO_2_LOW SERVO_2_PIN_LOW   
+    #define SERVO_2_LOW SERVO_2_PIN_LOW
     #define SERVO_2_ARR_POS 1
   #endif
 #endif
-#if (PRI_SERVO_FROM <= 3 && PRI_SERVO_TO >= 3) || (SEC_SERVO_FROM <= 3 && SEC_SERVO_TO >= 3) 
+#if (PRI_SERVO_FROM <= 3 && PRI_SERVO_TO >= 3) || (SEC_SERVO_FROM <= 3 && SEC_SERVO_TO >= 3)
   #undef LAST_LOW
   #define LAST_LOW SERVO_3_PIN_LOW
   #if !defined(SERVO_1_HIGH)
     #define SERVO_1_HIGH SERVO_3_PIN_HIGH
     #define SERVO_1_LOW SERVO_3_PIN_LOW
-    #define SERVO_1_ARR_POS 2 
+    #define SERVO_1_ARR_POS 2
   #elif !defined(SERVO_2_HIGH)
     #define SERVO_2_HIGH SERVO_3_PIN_HIGH
-    #define SERVO_2_LOW SERVO_3_PIN_LOW 
-    #define SERVO_2_ARR_POS 2 
+    #define SERVO_2_LOW SERVO_3_PIN_LOW
+    #define SERVO_2_ARR_POS 2
   #else
     #define SERVO_3_HIGH SERVO_3_PIN_HIGH
-    #define SERVO_3_LOW SERVO_3_PIN_LOW  
-    #define SERVO_3_ARR_POS 2   
+    #define SERVO_3_LOW SERVO_3_PIN_LOW
+    #define SERVO_3_ARR_POS 2
   #endif
 #endif
-#if (PRI_SERVO_FROM <= 4 && PRI_SERVO_TO >= 4) || (SEC_SERVO_FROM <= 4 && SEC_SERVO_TO >= 4) 
+#if (PRI_SERVO_FROM <= 4 && PRI_SERVO_TO >= 4) || (SEC_SERVO_FROM <= 4 && SEC_SERVO_TO >= 4)
   #undef LAST_LOW
   #define LAST_LOW SERVO_4_PIN_LOW
   #if !defined(SERVO_1_HIGH)
     #define SERVO_1_HIGH SERVO_4_PIN_HIGH
     #define SERVO_1_LOW SERVO_4_PIN_LOW
-    #define SERVO_1_ARR_POS 3  
+    #define SERVO_1_ARR_POS 3
   #elif !defined(SERVO_2_HIGH)
     #define SERVO_2_HIGH SERVO_4_PIN_HIGH
     #define SERVO_2_LOW SERVO_4_PIN_LOW
@@ -758,11 +759,11 @@
   #elif !defined(SERVO_3_HIGH)
     #define SERVO_3_HIGH SERVO_4_PIN_HIGH
     #define SERVO_3_LOW SERVO_4_PIN_LOW
-    #define SERVO_3_ARR_POS 3    
+    #define SERVO_3_ARR_POS 3
   #else
     #define SERVO_4_HIGH SERVO_4_PIN_HIGH
-    #define SERVO_4_LOW SERVO_4_PIN_LOW 
-    #define SERVO_4_ARR_POS 3     
+    #define SERVO_4_LOW SERVO_4_PIN_LOW
+    #define SERVO_4_ARR_POS 3
   #endif
 #endif
 #if (PRI_SERVO_FROM <= 5 && PRI_SERVO_TO >= 5) || (SEC_SERVO_FROM <= 5 && SEC_SERVO_TO >= 5)
@@ -771,23 +772,23 @@
   #if !defined(SERVO_1_HIGH)
     #define SERVO_1_HIGH SERVO_5_PIN_HIGH
     #define SERVO_1_LOW SERVO_5_PIN_LOW
-    #define SERVO_1_ARR_POS 4   
+    #define SERVO_1_ARR_POS 4
   #elif !defined(SERVO_2_HIGH)
     #define SERVO_2_HIGH SERVO_5_PIN_HIGH
     #define SERVO_2_LOW SERVO_5_PIN_LOW
-    #define SERVO_2_ARR_POS 4  
+    #define SERVO_2_ARR_POS 4
   #elif !defined(SERVO_3_HIGH)
     #define SERVO_3_HIGH SERVO_5_PIN_HIGH
     #define SERVO_3_LOW SERVO_5_PIN_LOW
-    #define SERVO_3_ARR_POS 4   
+    #define SERVO_3_ARR_POS 4
   #elif !defined(SERVO_4_HIGH)
     #define SERVO_4_HIGH SERVO_5_PIN_HIGH
     #define SERVO_4_LOW SERVO_5_PIN_LOW
-    #define SERVO_4_ARR_POS 4   
+    #define SERVO_4_ARR_POS 4
   #else
     #define SERVO_5_HIGH SERVO_5_PIN_HIGH
-    #define SERVO_5_LOW SERVO_5_PIN_LOW 
-    #define SERVO_5_ARR_POS 4     
+    #define SERVO_5_LOW SERVO_5_PIN_LOW
+    #define SERVO_5_ARR_POS 4
   #endif
 #endif
 #if (PRI_SERVO_FROM <= 6 && PRI_SERVO_TO >= 6) || (SEC_SERVO_FROM <= 6 && SEC_SERVO_TO >= 6)
@@ -795,28 +796,28 @@
   #define LAST_LOW SERVO_6_PIN_LOW
   #if !defined(SERVO_1_HIGH)
     #define SERVO_1_HIGH SERVO_6_PIN_HIGH
-    #define SERVO_1_LOW SERVO_6_PIN_LOW 
-    #define SERVO_1_ARR_POS 5 
+    #define SERVO_1_LOW SERVO_6_PIN_LOW
+    #define SERVO_1_ARR_POS 5
   #elif !defined(SERVO_2_HIGH)
     #define SERVO_2_HIGH SERVO_6_PIN_HIGH
     #define SERVO_2_LOW SERVO_6_PIN_LOW
-    #define SERVO_2_ARR_POS 5 
+    #define SERVO_2_ARR_POS 5
   #elif !defined(SERVO_3_HIGH)
     #define SERVO_3_HIGH SERVO_6_PIN_HIGH
     #define SERVO_3_LOW SERVO_6_PIN_LOW
-    #define SERVO_3_ARR_POS 5   
+    #define SERVO_3_ARR_POS 5
   #elif !defined(SERVO_4_HIGH)
     #define SERVO_4_HIGH SERVO_6_PIN_HIGH
-    #define SERVO_4_LOW SERVO_6_PIN_LOW 
-    #define SERVO_4_ARR_POS 5  
+    #define SERVO_4_LOW SERVO_6_PIN_LOW
+    #define SERVO_4_ARR_POS 5
   #elif !defined(SERVO_5_HIGH)
     #define SERVO_5_HIGH SERVO_6_PIN_HIGH
-    #define SERVO_5_LOW SERVO_6_PIN_LOW 
-    #define SERVO_5_ARR_POS 5  
+    #define SERVO_5_LOW SERVO_6_PIN_LOW
+    #define SERVO_5_ARR_POS 5
   #else
     #define SERVO_6_HIGH SERVO_6_PIN_HIGH
-    #define SERVO_6_LOW SERVO_6_PIN_LOW  
-    #define SERVO_6_ARR_POS 5   
+    #define SERVO_6_LOW SERVO_6_PIN_LOW
+    #define SERVO_6_ARR_POS 5
   #endif
 #endif
 #if (PRI_SERVO_FROM <= 7 && PRI_SERVO_TO >= 7) || (SEC_SERVO_FROM <= 7 && SEC_SERVO_TO >= 7)
@@ -824,41 +825,41 @@
   #define LAST_LOW SERVO_7_PIN_LOW
   #if !defined(SERVO_1_HIGH)
     #define SERVO_1_HIGH SERVO_7_PIN_HIGH
-    #define SERVO_1_LOW SERVO_7_PIN_LOW 
-    #define SERVO_1_ARR_POS 6 
+    #define SERVO_1_LOW SERVO_7_PIN_LOW
+    #define SERVO_1_ARR_POS 6
   #elif !defined(SERVO_2_HIGH)
     #define SERVO_2_HIGH SERVO_7_PIN_HIGH
     #define SERVO_2_LOW SERVO_7_PIN_LOW
-    #define SERVO_2_ARR_POS 6 
+    #define SERVO_2_ARR_POS 6
   #elif !defined(SERVO_3_HIGH)
     #define SERVO_3_HIGH SERVO_7_PIN_HIGH
     #define SERVO_3_LOW SERVO_7_PIN_LOW
-    #define SERVO_3_ARR_POS 6   
+    #define SERVO_3_ARR_POS 6
   #elif !defined(SERVO_4_HIGH)
     #define SERVO_4_HIGH SERVO_7_PIN_HIGH
-    #define SERVO_4_LOW SERVO_7_PIN_LOW 
-    #define SERVO_4_ARR_POS 6  
+    #define SERVO_4_LOW SERVO_7_PIN_LOW
+    #define SERVO_4_ARR_POS 6
   #elif !defined(SERVO_5_HIGH)
     #define SERVO_5_HIGH SERVO_7_PIN_HIGH
-    #define SERVO_5_LOW SERVO_7_PIN_LOW 
-    #define SERVO_5_ARR_POS 6  
+    #define SERVO_5_LOW SERVO_7_PIN_LOW
+    #define SERVO_5_ARR_POS 6
   #elif !defined(SERVO_6_HIGH)
     #define SERVO_6_HIGH SERVO_7_PIN_HIGH
-    #define SERVO_6_LOW SERVO_7_PIN_LOW 
-    #define SERVO_6_ARR_POS 6  
+    #define SERVO_6_LOW SERVO_7_PIN_LOW
+    #define SERVO_6_ARR_POS 6
   #else
     #define SERVO_7_HIGH SERVO_7_PIN_HIGH
-    #define SERVO_7_LOW SERVO_7_PIN_LOW  
-    #define SERVO_7_ARR_POS 6   
+    #define SERVO_7_LOW SERVO_7_PIN_LOW
+    #define SERVO_7_ARR_POS 6
   #endif
 #endif
-#if (PRI_SERVO_FROM <= 8 && PRI_SERVO_TO >= 8) || (SEC_SERVO_FROM <= 8 && SEC_SERVO_TO >= 8) 
+#if (PRI_SERVO_FROM <= 8 && PRI_SERVO_TO >= 8) || (SEC_SERVO_FROM <= 8 && SEC_SERVO_TO >= 8)
   #undef LAST_LOW
   #define LAST_LOW SERVO_8_PIN_LOW
   #if !defined(SERVO_1_HIGH)
     #define SERVO_1_HIGH SERVO_8_PIN_HIGH
-    #define SERVO_1_LOW SERVO_8_PIN_LOW 
-    #define SERVO_1_ARR_POS 7 
+    #define SERVO_1_LOW SERVO_8_PIN_LOW
+    #define SERVO_1_ARR_POS 7
   #elif !defined(SERVO_2_HIGH)
     #define SERVO_2_HIGH SERVO_8_PIN_HIGH
     #define SERVO_2_LOW SERVO_8_PIN_LOW
@@ -866,27 +867,27 @@
   #elif !defined(SERVO_3_HIGH)
     #define SERVO_3_HIGH SERVO_8_PIN_HIGH
     #define SERVO_3_LOW SERVO_8_PIN_LOW
-    #define SERVO_3_ARR_POS 7  
+    #define SERVO_3_ARR_POS 7
   #elif !defined(SERVO_4_HIGH)
     #define SERVO_4_HIGH SERVO_8_PIN_HIGH
     #define SERVO_4_LOW SERVO_8_PIN_LOW
-    #define SERVO_4_ARR_POS 7  
+    #define SERVO_4_ARR_POS 7
   #elif !defined(SERVO_5_HIGH)
     #define SERVO_5_HIGH SERVO_8_PIN_HIGH
-    #define SERVO_5_LOW SERVO_8_PIN_LOW 
-    #define SERVO_5_ARR_POS 7  
+    #define SERVO_5_LOW SERVO_8_PIN_LOW
+    #define SERVO_5_ARR_POS 7
   #elif !defined(SERVO_6_HIGH)
     #define SERVO_6_HIGH SERVO_8_PIN_HIGH
-    #define SERVO_6_LOW SERVO_8_PIN_LOW 
-    #define SERVO_6_ARR_POS 7 
+    #define SERVO_6_LOW SERVO_8_PIN_LOW
+    #define SERVO_6_ARR_POS 7
   #elif !defined(SERVO_7_HIGH)
     #define SERVO_7_HIGH SERVO_8_PIN_HIGH
-    #define SERVO_7_LOW SERVO_8_PIN_LOW 
-    #define SERVO_7_ARR_POS 7  
+    #define SERVO_7_LOW SERVO_8_PIN_LOW
+    #define SERVO_7_ARR_POS 7
   #else
     #define SERVO_8_HIGH SERVO_8_PIN_HIGH
-    #define SERVO_8_LOW SERVO_8_PIN_LOW  
-    #define SERVO_8_ARR_POS 7   
+    #define SERVO_8_LOW SERVO_8_PIN_LOW
+    #define SERVO_8_ARR_POS 7
   #endif
 #endif
 
@@ -988,7 +989,7 @@
   #define SOFT_PWM_3_PIN_LOW         PORTD &= ~(1<<4);
   #define SOFT_PWM_4_PIN_HIGH        PORTF |= 1<<5;
   #define SOFT_PWM_4_PIN_LOW         PORTF &= ~(1<<5);
-  #define SW_PWM_P3                  4        
+  #define SW_PWM_P3                  4
   #define SW_PWM_P4                  A2
   #define HWPWM6
   // move servo 3 & 4 to pin 13 & 11
@@ -1003,7 +1004,7 @@
     #define LEDPIN_PINMODE             DDRD |= (1<<4);            //D4 to output
     #define LEDPIN_TOGGLE              PIND |= (1<<5)|(1<<4);     //switch LEDPIN state (Port D5) & pin D4
     #define LEDPIN_OFF                 PORTD |= (1<<5); PORTD &= ~(1<<4);
-    #define LEDPIN_ON                  PORTD &= ~(1<<5); PORTD |= (1<<4);  
+    #define LEDPIN_ON                  PORTD &= ~(1<<5); PORTD |= (1<<4);
   #endif
 #endif
 
@@ -1363,7 +1364,7 @@
   #define BMP085
   #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL] = -X; imu.accADC[PITCH] = -Y; imu.accADC[YAW] = Z;}
   #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] = Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;}
-  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL] = -Y; imu.magADC[PITCH] = X; imu.magADC[YAW] = -Z;} 
+  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL] = -Y; imu.magADC[PITCH] = X; imu.magADC[YAW] = -Z;}
 #endif
 
 #if defined(Bobs_6DOF_V1)
@@ -1396,44 +1397,44 @@
   #undef INTERNAL_IC2_PULLUPS
 #endif
 
-#if defined(HK_MultiWii_SE_V2 ) 
-  #define MPU6050 
-  #define HMC5883 
-  #define BMP085 
-  #define ACC_ORIENTATION(X, Y, Z) {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;} 
-  #define GYRO_ORIENTATION(X, Y, Z){imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;} 
-  #define MAG_ORIENTATION(X, Y, Z) {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;} 
-  #define MPU6050_EN_I2C_BYPASS // MAG connected to the AUX I2C bus of MPU6050 
-  #undef INTERNAL_I2C_PULLUPS 
+#if defined(HK_MultiWii_SE_V2 )
+  #define MPU6050
+  #define HMC5883
+  #define BMP085
+  #define ACC_ORIENTATION(X, Y, Z) {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;}
+  #define GYRO_ORIENTATION(X, Y, Z){imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;}
+  #define MAG_ORIENTATION(X, Y, Z) {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;}
+  #define MPU6050_EN_I2C_BYPASS // MAG connected to the AUX I2C bus of MPU6050
+  #undef INTERNAL_I2C_PULLUPS
 #endif
 
-#if defined(HK_MultiWii_328P ) 
+#if defined(HK_MultiWii_328P )
   #define ITG3200
   #define BMA180
-  #define HMC5883 
-  #define BMP085 
-  #define ACC_ORIENTATION(X, Y, Z) {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;} 
-  #define GYRO_ORIENTATION(X, Y, Z){imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;} 
-  #define MAG_ORIENTATION(X, Y, Z) {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;} 
-  #undef INTERNAL_I2C_PULLUPS 
+  #define HMC5883
+  #define BMP085
+  #define ACC_ORIENTATION(X, Y, Z) {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;}
+  #define GYRO_ORIENTATION(X, Y, Z){imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;}
+  #define MAG_ORIENTATION(X, Y, Z) {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;}
+  #undef INTERNAL_I2C_PULLUPS
 #endif
 
-#if defined(CRIUS_AIO_PRO_V1) 
-  #define MPU6050 
-  #define HMC5883 
-  #define MS561101BA 
-  #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;} 
-  #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;} 
-  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;} 
-  #define MPU6050_I2C_AUX_MASTER // MAG connected to the AUX I2C bus of MPU6050 
-  #undef INTERNAL_I2C_PULLUPS 
+#if defined(CRIUS_AIO_PRO_V1)
+  #define MPU6050
+  #define HMC5883
+  #define MS561101BA
+  #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;}
+  #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;}
+  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;}
+  #define MPU6050_I2C_AUX_MASTER // MAG connected to the AUX I2C bus of MPU6050
+  #undef INTERNAL_I2C_PULLUPS
   #define I2C_SPEED 400000L         //400kHz fast mode
   //servo pins on AIO board is at pins 44,45,46, then release pins 33,34,35 for other usage
   //eg. pin 33 on AIO can be used for LEDFLASHER output
   #define SERVO_1_PINMODE            pinMode(44,OUTPUT);        // TILT_PITCH
   #define SERVO_1_PIN_HIGH           PORTL |= 1<<5;
   #define SERVO_1_PIN_LOW            PORTL &= ~(1<<5);
-  #define SERVO_2_PINMODE            pinMode(45,OUTPUT);        // TILT_ROLL 
+  #define SERVO_2_PINMODE            pinMode(45,OUTPUT);        // TILT_ROLL
   #define SERVO_2_PIN_HIGH           PORTL |= 1<<4;
   #define SERVO_2_PIN_LOW            PORTL &= ~(1<<4);
   #define SERVO_3_PINMODE            pinMode(46,OUTPUT);        // CAM TRIG
@@ -1457,7 +1458,7 @@
   #define NO_VBAT         10
 #endif
 
-#if defined(MEGAWAP_V2_STD) 
+#if defined(MEGAWAP_V2_STD)
   #define ITG3200
   #define BMA180
   #define HMC5883
@@ -1467,39 +1468,39 @@
   #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;}
 #endif
 
-#if defined(MEGAWAP_V2_ADV) 
-  #define MPU6050 
-  #define HMC5883 
-  #define MS561101BA 
-  #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;} 
-  #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;} 
-  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;} 
-  #define MPU6050_EN_I2C_BYPASS // MAG connected to the AUX I2C bus of MPU6050 
-  #undef INTERNAL_I2C_PULLUPS 
+#if defined(MEGAWAP_V2_ADV)
+  #define MPU6050
+  #define HMC5883
+  #define MS561101BA
+  #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;}
+  #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;}
+  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = -Z;}
+  #define MPU6050_EN_I2C_BYPASS // MAG connected to the AUX I2C bus of MPU6050
+  #undef INTERNAL_I2C_PULLUPS
 #endif
 
 #if defined(RCNet_FC_GPS)
   #define RCNet_FC
   #define HMC5883
-  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  -X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = Z;} 
+  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  -X; imu.magADC[PITCH]  =  Y; imu.magADC[YAW]  = Z;}
   #define MPU6050_I2C_AUX_MASTER // MAG connected to the AUX I2C bus of MPU6050
-  #undef INTERNAL_I2C_PULLUPS 
+  #undef INTERNAL_I2C_PULLUPS
   #define GPS_SERIAL 2
   #define GPS_BAUD   115200
-  #define UBLOX 
+  #define UBLOX
 #endif
 
-#if defined(RCNet_FC) 
-  #define MPU6050 
-  #define MS561101BA 
+#if defined(RCNet_FC)
+  #define MPU6050
+  #define MS561101BA
   #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;}
   #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;}
-  #undef INTERNAL_I2C_PULLUPS 
+  #undef INTERNAL_I2C_PULLUPS
   //servo pins on RCNet FC board are at pins 38,39,40
   #define SERVO_1_PINMODE            pinMode(40,OUTPUT);        // TILT_PITCH
   #define SERVO_1_PIN_HIGH           PORTL |= 1<<5;
   #define SERVO_1_PIN_LOW            PORTL &= ~(1<<5);
-  #define SERVO_2_PINMODE            pinMode(39,OUTPUT);        // TILT_ROLL 
+  #define SERVO_2_PINMODE            pinMode(39,OUTPUT);        // TILT_ROLL
   #define SERVO_2_PIN_HIGH           PORTL |= 1<<4;
   #define SERVO_2_PIN_LOW            PORTL &= ~(1<<4);
   #define SERVO_3_PINMODE            pinMode(38,OUTPUT);        // CAM TRIG
@@ -1508,15 +1509,15 @@
 #endif
 
 #if defined(FLYDU_ULTRA)
-  #define ITG3200	
+  #define ITG3200
   #define MMA8451Q
   #define MS561101BA
   #define MAG3110
-  
+
   #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  =  X; imu.accADC[PITCH] = Y; imu.accADC[YAW]  = Z;}
   #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] = Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;}
   #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  = -Y; imu.magADC[PITCH] = X; imu.magADC[YAW]  = Z;}
-  
+
   #define GPS_SERIAL 2
   #define GPS_BAUD   57600
   #define MTK_BINARY19
@@ -1567,47 +1568,47 @@
   #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  = -X; imu.accADC[PITCH]  = -Y; imu.accADC[YAW]  =  Z;}
   #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  Y; imu.gyroADC[PITCH] = -X; imu.gyroADC[YAW] = -Z;}
   #define ADXL345_ADDRESS 0x53
-  
+
   #define SDO_pin A0
-  #define SDI_pin A1        
-  #define SCLK_pin A2 
+  #define SDI_pin A1
+  #define SCLK_pin A2
   #define IRQ_pin 2
   #define nSel_pin 4
   #define IRQ_interrupt 0
-  
+
   #define  nIRQ_1 (PIND & 0x04)==0x04 //D2
   #define  nIRQ_0 (PIND & 0x04)==0x00 //D2
-  
+
   #define  nSEL_on PORTD |= 0x10 //D4
   #define  nSEL_off PORTD &= 0xEF //D4
-  
+
   #define  SCK_on PORTC |= 0x04 //C2
   #define  SCK_off PORTC &= 0xFB //C2
-  
+
   #define  SDI_on PORTC |= 0x02 //C1
   #define  SDI_off PORTC &= 0xFD //C1
-  
+
   #define  SDO_1 (PINC & 0x01) == 0x01 //C0
   #define  SDO_0 (PINC & 0x01) == 0x00 //C0
-  
+
   //#### Other interface pinouts ###
   #define GREEN_LED_pin 13
   #define RED_LED_pin A3
 
   #define Red_LED_ON  PORTC |= _BV(3);
   #define Red_LED_OFF  PORTC &= ~_BV(3);
-  
+
   #define Green_LED_ON  PORTB |= _BV(5);
   #define Green_LED_OFF  PORTB &= ~_BV(5);
-  
-  #define NOP() __asm__ __volatile__("nop") 
- 
-  #define RF22B_PWRSTATE_READY    01 
-  #define RF22B_PWRSTATE_TX        0x09 
-  #define RF22B_PWRSTATE_RX       05 
-  #define RF22B_Rx_packet_received_interrupt   0x02 
-  #define RF22B_PACKET_SENT_INTERRUPT  04 
-  #define RF22B_PWRSTATE_POWERDOWN  00    
+
+  #define NOP() __asm__ __volatile__("nop")
+
+  #define RF22B_PWRSTATE_READY    01
+  #define RF22B_PWRSTATE_TX        0x09
+  #define RF22B_PWRSTATE_RX       05
+  #define RF22B_Rx_packet_received_interrupt   0x02
+  #define RF22B_PACKET_SENT_INTERRUPT  04
+  #define RF22B_PWRSTATE_POWERDOWN  00
 
 #endif
 
@@ -1780,18 +1781,18 @@
 #elif defined(HEX6X)
   #define MULTITYPE 10
 #elif defined(OCTOX8)
-  #define MULTITYPE 11   //the JAVA GUI is the same for all 8 motor configs 
+  #define MULTITYPE 11   //the JAVA GUI is the same for all 8 motor configs
 #elif defined(OCTOFLATP)
   #define MULTITYPE 12   //12  for MultiWinGui
 #elif defined(OCTOFLATX)
-  #define MULTITYPE 13   //13  for MultiWinGui 
+  #define MULTITYPE 13   //13  for MultiWinGui
 #elif defined(AIRPLANE)
-  #define MULTITYPE 14    
+  #define MULTITYPE 14
   #define SERVO_RATES      {30,30,100,100,-100,100,100,100}
-#elif defined (HELI_120_CCPM)   
-  #define MULTITYPE 15      
-#elif defined (HELI_90_DEG)   
-  #define MULTITYPE 16      
+#elif defined (HELI_120_CCPM)
+  #define MULTITYPE 15
+#elif defined (HELI_90_DEG)
+  #define MULTITYPE 16
   #define SERVO_RATES      {30,30,100,-100,-100,100,100,100}
 #elif defined(VTAIL4)
   #define MULTITYPE 17
@@ -1808,7 +1809,7 @@
 /***************          Some unsorted "chain" defines            ********************/
 /**************************************************************************************/
 
-#if defined (AIRPLANE) || defined(HELICOPTER)|| defined(SINGLECOPTER)|| defined(DUALCOPTER) && defined(PROMINI) 
+#if defined (AIRPLANE) || defined(HELICOPTER)|| defined(SINGLECOPTER)|| defined(DUALCOPTER) && defined(PROMINI)
   #if defined(D12_POWER)
     #define SERVO_4_PINMODE            ;  // D12
     #define SERVO_4_PIN_HIGH           ;
@@ -1830,7 +1831,7 @@
   #define PLEVELDIV 36000
 #endif
 
-#if defined PILOTLAMP 
+#if defined PILOTLAMP
   #define    PL_CHANNEL OCR0B  //use B since A can be used by camstab
   #define    PL_ISR TIMER0_COMPB_vect
   #define    PL_INIT   TCCR0A=0;TIMSK0|=(1<<OCIE0B);PL_CHANNEL=PL_IDLE;PilotLamp(PL_GRN_OFF);PilotLamp(PL_BLU_OFF);PilotLamp(PL_RED_OFF);PilotLamp(PL_BZR_OFF);
@@ -1875,13 +1876,13 @@
   #if defined(SPEK_BIND)
     #if !defined(SPEK_BIND_GROUND)
       #define SPEK_BIND_GROUND 4
-    #endif  
+    #endif
     #if !defined(SPEK_BIND_POWER)
       #define SPEK_BIND_POWER  5
-    #endif  
+    #endif
     #if !defined(SPEK_BIND_DATA)
       #define SPEK_BIND_DATA   6
-    #endif  
+    #endif
   #endif
 #endif
 
@@ -1898,7 +1899,7 @@
 /***************                       I2C GPS                     ********************/
 /**************************************************************************************/
 #if defined(I2C_GPS)
-  #define I2C_GPS_ADDRESS                         0x20 //7 bits       
+  #define I2C_GPS_ADDRESS                         0x20 //7 bits
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // I2C GPS NAV registers
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1913,12 +1914,12 @@
 #define I2C_GPS_COMMAND                              01 // (write only)
         #define I2C_GPS_COMMAND_POSHOLD       0x01      // Start position hold at the current gps positon
         #define I2C_GPS_COMMAND_START_NAV     0x02      // get the WP from the command and start navigating toward it
-        #define I2C_GPS_COMMAND_SET_WP        0x03      // copy current position to given WP      
+        #define I2C_GPS_COMMAND_SET_WP        0x03      // copy current position to given WP
         #define I2C_GPS_COMMAND_UPDATE_PIDS   0x04      // update PI and PID controllers from the PID registers, this must be called after a pid register is changed
         #define I2C_GPS_COMMAND_NAV_OVERRIDE  0x05      // do not nav since we tring to controll the copter manually (not implemented yet)
         #define I2C_GPS_COMMAND_STOP_NAV      0x06      // Stop navigation (zeroes out nav_lat and nav_lon
         #define I2C_GPS_COMMAND__7            0x07
-        #define I2C_GPS_COMMAND__8            0x08      
+        #define I2C_GPS_COMMAND__8            0x08
         #define I2C_GPS_COMMAND__9            0x09
         #define I2C_GPS_COMMAND__a            0x0a
         #define I2C_GPS_COMMAND__b            0x0b
@@ -1932,7 +1933,7 @@
 #define I2C_GPS_WP_REG                              02   // Waypoint register (Read only)
         #define I2C_GPS_WP_REG_ACTIVE_MASK    0x0F       // Active Waypoint lower 4 bits
         #define I2C_GPS_WP_REG_PERVIOUS_MASK  0xF0       // pervious Waypoint upper 4 bits
-        
+
 #define I2C_GPS_REG_VERSION                         03   // Version of the I2C_NAV SW uint8_t
 #define I2C_GPS_REG_RES2                            04   // reserved for future use (uint8_t)
 #define I2C_GPS_REG_RES3                            05   // reserved for future use (uint8_t)
@@ -1947,7 +1948,7 @@
 #define I2C_GPS_NAV_BEARING                         25   // crosstrack corrected bearing towards current wp 1deg = 1000 int16_t
 #define I2C_GPS_HOME_TO_COPTER_BEARING              27   // bearing from home to copter 1deg = 1000 int16_t
 #define I2C_GPS_DISTANCE_TO_HOME                    29   // distance to home in m int16_t
-        
+
 #define I2C_GPS_GROUND_SPEED                        31   // GPS ground speed in m/s*100 (uint16_t)      (Read Only)
 #define I2C_GPS_ALTITUDE                            33   // GPS altitude in meters (uint16_t)           (Read Only)
 #define I2C_GPS_GROUND_COURSE                       35   // GPS ground course (uint16_t)
@@ -1999,7 +2000,7 @@
 
 #define I2C_GPS_SONAR_ALT                           239   // Sonar Altitude
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// End register definition 
+// End register definition
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #endif
