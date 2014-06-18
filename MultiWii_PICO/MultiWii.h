@@ -56,6 +56,8 @@ extern att_t att;
 extern plog_t plog;
 #endif
 
+extern int32_t  BaroHome;
+
 extern int16_t debug[4];
 
 extern conf_t conf;

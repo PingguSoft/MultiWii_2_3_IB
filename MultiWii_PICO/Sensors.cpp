@@ -27,13 +27,13 @@ void ACC_init();
 // board orientation and setup
 // ************************************************************************************************************
 //default board orientation
-#if !defined(ACC_ORIENTATION) 
+#if !defined(ACC_ORIENTATION)
   #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  = X; imu.accADC[PITCH]  = Y; imu.accADC[YAW]  = Z;}
 #endif
-#if !defined(GYRO_ORIENTATION) 
+#if !defined(GYRO_ORIENTATION)
   #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] = X; imu.gyroADC[PITCH] = Y; imu.gyroADC[YAW] = Z;}
 #endif
-#if !defined(MAG_ORIENTATION) 
+#if !defined(MAG_ORIENTATION)
   #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  = X; imu.magADC[PITCH]  = Y; imu.magADC[YAW]  = Z;}
 #endif
 
@@ -42,22 +42,22 @@ void ACC_init();
   #define MMA7455_ADDRESS 0x1D
 #endif
 
-#if !defined(ADXL345_ADDRESS) 
+#if !defined(ADXL345_ADDRESS)
   #define ADXL345_ADDRESS 0x1D
   //#define ADXL345_ADDRESS 0x53   //WARNING: Conflicts with a Wii Motion plus!
 #endif
 
-#if !defined(BMA180_ADDRESS) 
+#if !defined(BMA180_ADDRESS)
   #define BMA180_ADDRESS 0x40
   //#define BMA180_ADDRESS 0x41
 #endif
 
-#if !defined(BMA280_ADDRESS) 
+#if !defined(BMA280_ADDRESS)
   #define BMA280_ADDRESS 0x18 // SDO PIN on GND
   //#define BMA280_ADDRESS 0x19  // SDO PIN on Vddio
 #endif
 
-#if !defined(ITG3200_ADDRESS) 
+#if !defined(ITG3200_ADDRESS)
   #define ITG3200_ADDRESS 0X68
   //#define ITG3200_ADDRESS 0X69
 #endif
@@ -82,7 +82,7 @@ void ACC_init();
   //#define MPU3050_ADDRESS     0x69 // Switch in "1" position
 #endif
 
-#if !defined(MS561101BA_ADDRESS) 
+#if !defined(MS561101BA_ADDRESS)
   #define MS561101BA_ADDRESS 0x77 //CBR=0 0xEE I2C address when pin CSB is connected to LOW (GND)
   //#define MS561101BA_ADDRESS 0x76 //CBR=1 0xEC I2C address when pin CSB is connected to HIGH (VCC)
 #endif
@@ -177,7 +177,7 @@ void ACC_init();
 
 uint8_t rawADC[6];
 static uint32_t neutralizeTime = 0;
-  
+
 // ************************************************************************************************************
 // I2C general functions
 // ************************************************************************************************************
@@ -302,7 +302,7 @@ void GYRO_Common() {
   static int32_t g[3];
   uint8_t axis, tilt=0;
 
-#if defined MMGYRO       
+#if defined MMGYRO
   // Moving Average Gyros by Magnetron1
   //---------------------------------------------------
   static int16_t mediaMobileGyroADC[3][MMGYROVECTORLENGTH];
@@ -316,7 +316,7 @@ void GYRO_Common() {
       // Reset g[axis] at start of calibration
       if (calibratingG == 512) {
         g[axis]=0;
-        
+
         #if defined(GYROCALIBRATIONFAILSAFE)
             previousGyroADC[axis] = imu.gyroADC[axis];
           }
@@ -335,7 +335,7 @@ void GYRO_Common() {
       #if defined(BUZZER)
         alarmArray[7] = 4;
       #else
-        blinkLED(10,15,1); //the delay causes to beep the buzzer really long 
+        blinkLED(10,15,1); //the delay causes to beep the buzzer really long
       #endif
       }
     }
@@ -351,10 +351,10 @@ void GYRO_Common() {
     #else
       calibratingG--;
     #endif
-    
+
   }
 
-#ifdef MMGYRO       
+#ifdef MMGYRO
   mediaMobileGyroIDX = ++mediaMobileGyroIDX % conf.mmgyro;
   for (axis = 0; axis < 3; axis++) {
     imu.gyroADC[axis]  -= gyroZero[axis];
@@ -363,12 +363,12 @@ void GYRO_Common() {
     mediaMobileGyroADC[axis][mediaMobileGyroIDX] = constrain(imu.gyroADC[axis],previousGyroADC[axis]-800,previousGyroADC[axis]+800);
     mediaMobileGyroADCSum[axis] += mediaMobileGyroADC[axis][mediaMobileGyroIDX];
     imu.gyroADC[axis] = mediaMobileGyroADCSum[axis] / conf.mmgyro;
-#else 
+#else
   for (axis = 0; axis < 3; axis++) {
     imu.gyroADC[axis]  -= gyroZero[axis];
     //anti gyro glitch, limit the variation between two consecutive readings
     imu.gyroADC[axis] = constrain(imu.gyroADC[axis],previousGyroADC[axis]-800,previousGyroADC[axis]+800);
-#endif    
+#endif
     previousGyroADC[axis] = imu.gyroADC[axis];
   }
 
@@ -500,7 +500,7 @@ static struct {
   union {uint32_t val; uint8_t raw[4]; } up; //uncompensated P
   uint8_t  state;
   uint32_t deadline;
-} bmp085_ctx;  
+} bmp085_ctx;
 #define OSS 3
 
 void i2c_BMP085_readCalibration(){
@@ -519,7 +519,7 @@ void  Baro_init() {
   delay(10);
   i2c_BMP085_readCalibration();
   delay(5);
-  i2c_BMP085_UT_Start(); 
+  i2c_BMP085_UT_Start();
   bmp085_ctx.deadline = currentTime+5000;
 }
 
@@ -566,7 +566,7 @@ void i2c_BMP085_Calculate() {
   baroTemperature = (b5 * 10 + 8) >> 4; // in 0.01 degC (same as MS561101BA temperature)
   // Pressure calculations
   b6 = b5 - 4000;
-  x1 = (bmp085_ctx.b2 * (b6 * b6 >> 12)) >> 11; 
+  x1 = (bmp085_ctx.b2 * (b6 * b6 >> 12)) >> 11;
   x2 = bmp085_ctx.ac2 * b6 >> 11;
   x3 = x1 + x2;
   tmp = bmp085_ctx.ac1;
@@ -586,21 +586,21 @@ void i2c_BMP085_Calculate() {
 
 //return 0: no data available, no computation ;  1: new value available  ; 2: no new value, but computation time
 uint8_t Baro_update() {                   // first UT conversion is started in init procedure
-  if (currentTime < bmp085_ctx.deadline) return 0; 
+  if (currentTime < bmp085_ctx.deadline) return 0;
   bmp085_ctx.deadline = currentTime+6000; // 1.5ms margin according to the spec (4.5ms T convetion time)
   TWBR = ((F_CPU / 400000L) - 16) / 2; // change the I2C clock rate to 400kHz, BMP085 is ok with this speed
   if (bmp085_ctx.state == 0) {
-    i2c_BMP085_UT_Read(); 
-    i2c_BMP085_UP_Start(); 
-    bmp085_ctx.state = 1; 
+    i2c_BMP085_UT_Read();
+    i2c_BMP085_UP_Start();
+    bmp085_ctx.state = 1;
     Baro_Common();
     bmp085_ctx.deadline += 21000;   // 6000+21000=27000 1.5ms margin according to the spec (25.5ms P convetion time with OSS=3)
     return 1;
   } else {
-    i2c_BMP085_UP_Read(); 
-    i2c_BMP085_UT_Start(); 
-    i2c_BMP085_Calculate(); 
-    bmp085_ctx.state = 0; 
+    i2c_BMP085_UP_Read();
+    i2c_BMP085_UT_Start();
+    i2c_BMP085_Calculate();
+    bmp085_ctx.state = 0;
     return 2;
   }
 }
@@ -661,8 +661,8 @@ void  Baro_init() {
   delay(100);
   i2c_MS561101BA_readCalibration();
   delay(10);
-  i2c_MS561101BA_UT_Start(); 
-  ms561101ba_ctx.deadline = currentTime+10000; 
+  i2c_MS561101BA_UT_Start();
+  ms561101ba_ctx.deadline = currentTime+10000;
 }
 
 // read uncompensated temperature value: send command first
@@ -707,7 +707,7 @@ void i2c_MS561101BA_Calculate() {
   int64_t off      = ((uint32_t)ms561101ba_ctx.c[2] <<16) + ((dT * ms561101ba_ctx.c[4]) >> 7);
   int64_t sens     = ((uint32_t)ms561101ba_ctx.c[1] <<15) + ((dT * ms561101ba_ctx.c[3]) >> 8);
 
-  if (baroTemperature < 2000) { // temperature lower than 20st.C 
+  if (baroTemperature < 2000) { // temperature lower than 20st.C
     delt = baroTemperature-2000;
     delt  = 5*delt*delt;
     off2  = delt>>1;
@@ -718,7 +718,7 @@ void i2c_MS561101BA_Calculate() {
       off2  += 7 * delt;
       sens2 += (11 * delt)>>1;
     }
-    off  -= off2; 
+    off  -= off2;
     sens -= sens2;
   }
 
@@ -727,20 +727,20 @@ void i2c_MS561101BA_Calculate() {
 
 //return 0: no data available, no computation ;  1: new value available  ; 2: no new value, but computation time
 uint8_t Baro_update() {                            // first UT conversion is started in init procedure
-  if (currentTime < ms561101ba_ctx.deadline) return 0; 
-  ms561101ba_ctx.deadline = currentTime+10000;  // UT and UP conversion take 8.5ms so we do next reading after 10ms 
+  if (currentTime < ms561101ba_ctx.deadline) return 0;
+  ms561101ba_ctx.deadline = currentTime+10000;  // UT and UP conversion take 8.5ms so we do next reading after 10ms
   TWBR = ((F_CPU / 400000L) - 16) / 2;          // change the I2C clock rate to 400kHz, MS5611 is ok with this speed
   if (ms561101ba_ctx.state == 0) {
-    i2c_MS561101BA_UT_Read(); 
-    i2c_MS561101BA_UP_Start(); 
+    i2c_MS561101BA_UT_Read();
+    i2c_MS561101BA_UP_Start();
     Baro_Common();                              // moved here for less timecycle spike
     ms561101ba_ctx.state = 1;
     return 1;
   } else {
     i2c_MS561101BA_UP_Read();
-    i2c_MS561101BA_UT_Start(); 
+    i2c_MS561101BA_UT_Start();
     i2c_MS561101BA_Calculate();
-    ms561101ba_ctx.state = 0; 
+    ms561101ba_ctx.state = 0;
     return 2;
   }
 }
@@ -750,19 +750,19 @@ uint8_t Baro_update() {                            // first UT conversion is sta
   void Baro_Common() {
     static int32_t baroHistTab[BARO_TAB_SIZE];
     static uint8_t baroHistIdx;
-  
+
     uint8_t indexplus1 = (baroHistIdx + 1);
     if (indexplus1 == BARO_TAB_SIZE) indexplus1 = 0;
     baroHistTab[baroHistIdx] = baroPressure;
     baroPressureSum += baroHistTab[baroHistIdx];
     baroPressureSum -= baroHistTab[indexplus1];
-    baroHistIdx = indexplus1;  
+    baroHistIdx = indexplus1;
   }
 #endif
 
 
 // ************************************************************************************************************
-// I2C Accelerometer MMA7455 
+// I2C Accelerometer MMA7455
 // ************************************************************************************************************
 #if defined(MMA7455)
 void ACC_init () {
@@ -782,7 +782,7 @@ void ACC_getADC () {
 #endif
 
 // ************************************************************************************************************
-// I2C Accelerometer MMA8451Q 
+// I2C Accelerometer MMA8451Q
 // ************************************************************************************************************
 #if defined(MMA8451Q)
 
@@ -810,7 +810,7 @@ void ACC_getADC () {
 #endif
 
 // ************************************************************************************************************
-// I2C Accelerometer ADXL345 
+// I2C Accelerometer ADXL345
 // ************************************************************************************************************
 // I2C adress: 0x3A (8bit)    0x1D (7bit)
 // Resolution: 10bit (Full range - 14bit, but this is autoscaling 10bit ADC to the range +- 16g)
@@ -842,7 +842,7 @@ void ACC_getADC () {
 // ************************************************************************************************************
 // I2C Accelerometer BMA180
 // ************************************************************************************************************
-// I2C adress: 0x80 (8bit)    0x40 (7bit) (SDO connection to VCC) 
+// I2C adress: 0x80 (8bit)    0x40 (7bit) (SDO connection to VCC)
 // I2C adress: 0x82 (8bit)    0x41 (7bit) (SDO connection to VDDIO)
 // Resolution: 14bit
 //
@@ -871,12 +871,12 @@ void ACC_init () {
   control = control & 0xFC;        // save tco_z register
   control = control | 0x00;        // set mode_config to 0
   i2c_writeReg(BMA180_ADDRESS, 0x30, control);
-  delay(5); 
+  delay(5);
   control = i2c_readReg(BMA180_ADDRESS, 0x35);
   control = control & 0xF1;        // save offset_x and smp_skip register
   control = control | (0x05 << 1); // set range to 8G
   i2c_writeReg(BMA180_ADDRESS, 0x35, control);
-  delay(5); 
+  delay(5);
 }
 
 void ACC_getADC () {
@@ -935,7 +935,7 @@ void ACC_init(){
   control = control & 0xE0;        // save bits 7,6,5
   control = control | (0x02 << 3); // Range 8G (10)
   control = control | 0x00;        // Bandwidth 25 Hz 000
-  i2c_writeReg(0x38,0x14,control); 
+  i2c_writeReg(0x38,0x14,control);
 }
 
 void ACC_getADC(){
@@ -978,7 +978,7 @@ void ACC_getADC() {
 #define LIS3A  0x1D
 
 void ACC_init(){
-  i2c_writeReg(LIS3A ,0x20 ,0xD7 ); // CTRL_REG1   1101 0111 Pwr on, 160Hz 
+  i2c_writeReg(LIS3A ,0x20 ,0xD7 ); // CTRL_REG1   1101 0111 Pwr on, 160Hz
   i2c_writeReg(LIS3A ,0x21 ,0x50 ); // CTRL_REG2   0100 0000 Littl endian, 12 Bit, Boot
 }
 
@@ -1033,7 +1033,7 @@ void ACC_getADC() {
 #endif
 
 // ************************************************************************************************************
-// I2C Gyroscope L3G4200D 
+// I2C Gyroscope L3G4200D
 // ************************************************************************************************************
 #if defined(L3G4200D)
 #define L3G4200D_ADDRESS 0x69
@@ -1058,7 +1058,7 @@ void Gyro_getADC () {
 #endif
 
 // ************************************************************************************************************
-// I2C Gyroscope ITG3200 
+// I2C Gyroscope ITG3200
 // ************************************************************************************************************
 // I2C adress: 0xD2 (8bit)   0x69 (7bit)
 // I2C adress: 0xD0 (8bit)   0x68 (7bit)
@@ -1125,7 +1125,7 @@ uint8_t Mag_getADC() { // return 1 when news values are available, 0 otherwise
     imu.magADC[PITCH] -= global_conf.magZero[PITCH];
     imu.magADC[YAW]   -= global_conf.magZero[YAW];
   }
- 
+
   if (tCal != 0) {
     if ((t - tCal) < 30000000) { // 30s: you have 30s to turn the multi in all directions
       LEDPIN_TOGGLE;
@@ -1165,7 +1165,7 @@ uint8_t Mag_getADC() { // return 1 when news values are available, 0 otherwise
   #define MAG_DATA_REGISTER 0x01
   #define MAG_CTRL_REG1 0x10
   #define MAG_CTRL_REG2 0x11
-  
+
   void Mag_init() {
     delay(100);
     i2c_writeReg(MAG_ADDRESS,MAG_CTRL_REG2,0x80);  //Automatic Magnetic Sensor Reset
@@ -1174,12 +1174,12 @@ uint8_t Mag_getADC() { // return 1 when news values are available, 0 otherwise
     delay(100);
     magInit = 1;
   }
-  
+
   #if !defined(MPU6050_I2C_AUX_MASTER)
     void Device_Mag_getADC() {
       i2c_getSixRawADC(MAG_ADDRESS,MAG_DATA_REGISTER);
-      MAG_ORIENTATION( ((rawADC[0]<<8) | rawADC[1]) ,          
-                       ((rawADC[2]<<8) | rawADC[3]) ,     
+      MAG_ORIENTATION( ((rawADC[0]<<8) | rawADC[1]) ,
+                       ((rawADC[2]<<8) | rawADC[3]) ,
                        ((rawADC[4]<<8) | rawADC[5]) );
     }
   #endif
@@ -1213,7 +1213,7 @@ void Mag_init() {
   delay(50);  //Wait before start
   i2c_writeReg(MAG_ADDRESS, HMC58X3_R_CONFA, 0x010 + HMC_POS_BIAS); // Reg A DOR=0x010 + MS1,MS0 set to pos bias
 
-  // Note that the  very first measurement after a gain change maintains the same gain as the previous setting. 
+  // Note that the  very first measurement after a gain change maintains the same gain as the previous setting.
   // The new gain setting is effective from the second measurement and on.
 
   i2c_writeReg(MAG_ADDRESS, HMC58X3_R_CONFB, 2 << 5);  //Set the Gain
@@ -1225,12 +1225,12 @@ void Mag_init() {
     i2c_writeReg(MAG_ADDRESS,HMC58X3_R_MODE, 1);
     delay(100);
     getADC();   // Get the raw values in case the scales have already been changed.
-                
+
     // Since the measurements are noisy, they should be averaged rather than taking the max.
     xyz_total[0]+=imu.magADC[0];
     xyz_total[1]+=imu.magADC[1];
     xyz_total[2]+=imu.magADC[2];
-                
+
     // Detect saturation.
     if (-(1<<12) >= min(imu.magADC[0],min(imu.magADC[1],imu.magADC[2]))) {
       bret=false;
@@ -1240,11 +1240,11 @@ void Mag_init() {
 
   // Apply the negative bias. (Same gain)
   i2c_writeReg(MAG_ADDRESS,HMC58X3_R_CONFA, 0x010 + HMC_NEG_BIAS); // Reg A DOR=0x010 + MS1,MS0 set to negative bias.
-  for (uint8_t i=0; i<10; i++) { 
+  for (uint8_t i=0; i<10; i++) {
     i2c_writeReg(MAG_ADDRESS,HMC58X3_R_MODE, 1);
     delay(100);
     getADC();  // Get the raw values in case the scales have already been changed.
-                
+
     // Since the measurements are noisy, they should be averaged.
     xyz_total[0]-=imu.magADC[0];
     xyz_total[1]-=imu.magADC[1];
@@ -1285,8 +1285,8 @@ void Mag_init() {
 
   #define MAG_ADDRESS 0x1E
   #define MAG_DATA_REGISTER 0x03
-  
-  void Mag_init() { 
+
+  void Mag_init() {
     delay(100);
     // force positiveBias
     i2c_writeReg(MAG_ADDRESS ,0x00 ,0x71 ); //Configuration Register A  -- 0 11 100 01  num samples: 8 ; output rate: 15Hz ; positive bias
@@ -1313,7 +1313,7 @@ void Mag_init() {
     magInit = 1;
   }
 #endif
-  
+
 #if defined(HMC5843) || defined(HMC5883)
 void getADC() {
   i2c_getSixRawADC(MAG_ADDRESS,MAG_DATA_REGISTER);
@@ -1322,7 +1322,7 @@ void getADC() {
                      ((rawADC[2]<<8) | rawADC[3]) ,
                      ((rawADC[4]<<8) | rawADC[5]) );
   #endif
-  #if defined (HMC5883)  
+  #if defined (HMC5883)
     MAG_ORIENTATION( ((rawADC[0]<<8) | rawADC[1]) ,
                      ((rawADC[4]<<8) | rawADC[5]) ,
                      ((rawADC[2]<<8) | rawADC[3]) );
@@ -1345,7 +1345,7 @@ void Device_Mag_getADC() {
 #if defined(AK8975)
   #define MAG_ADDRESS 0x0C
   #define MAG_DATA_REGISTER 0x03
-  
+
   void Mag_init() {
     delay(100);
     i2c_writeReg(MAG_ADDRESS,0x0a,0x01);  //Start the first conversion
@@ -1355,8 +1355,8 @@ void Device_Mag_getADC() {
 
   void Device_Mag_getADC() {
     i2c_getSixRawADC(MAG_ADDRESS,MAG_DATA_REGISTER);
-    MAG_ORIENTATION( ((rawADC[1]<<8) | rawADC[0]) ,          
-                     ((rawADC[3]<<8) | rawADC[2]) ,     
+    MAG_ORIENTATION( ((rawADC[1]<<8) | rawADC[0]) ,
+                     ((rawADC[3]<<8) | rawADC[2]) ,
                      ((rawADC[5]<<8) | rawADC[4]) );
     //Start another meassurement
     i2c_writeReg(MAG_ADDRESS,0x0a,0x01);
@@ -1423,14 +1423,14 @@ void ACC_getADC () {
                          ((rawADC[2]<<8) | rawADC[3]) ,
                          ((rawADC[4]<<8) | rawADC[5]) );
       #endif
-      #if defined (HMC5883)  
+      #if defined (HMC5883)
         MAG_ORIENTATION( ((rawADC[0]<<8) | rawADC[1]) ,
                          ((rawADC[4]<<8) | rawADC[5]) ,
                          ((rawADC[2]<<8) | rawADC[3]) );
       #endif
       #if defined (MAG3110)
-        MAG_ORIENTATION( ((rawADC[0]<<8) | rawADC[1]) ,          
-                         ((rawADC[2]<<8) | rawADC[3]) ,     
+        MAG_ORIENTATION( ((rawADC[0]<<8) | rawADC[1]) ,
+                         ((rawADC[2]<<8) | rawADC[3]) ,
                          ((rawADC[4]<<8) | rawADC[5]) );
       #endif
     }
@@ -1441,7 +1441,7 @@ void ACC_getADC () {
 // Start Of I2C Gyroscope and Accelerometer LSM330
 // ************************************************************************************************************
 #if defined(LSM330)
-////////////////////////////////////	
+////////////////////////////////////
 //           ACC start            //
 ////////////////////////////////////
 void ACC_init () {
@@ -1452,13 +1452,13 @@ void ACC_init () {
   i2c_writeReg(LSM330_ACC_ADDRESS ,0x20 ,0x37 );  // 25Hz
   //i2c_writeReg(LSM330_ACC_ADDRESS ,0x20 ,0x47 ); // 50Hz
   //i2c_writeReg(LSM330_ACC_ADDRESS ,0x20 ,0x57 ); // 100Hz
-  
+
   delay(5);
   //i2c_writeReg(LSM330_ACC_ADDRESS ,0x23 ,0x08 ); // 2G
   //i2c_writeReg(LSM330_ACC_ADDRESS ,0x23 ,0x18 ); // 4G
   i2c_writeReg(LSM330_ACC_ADDRESS ,0x23 ,0x28 ); // 8G
-  //i2c_writeReg(LSM330_ACC_ADDRESS ,0x23 ,0x38 ); // 16G 
-  
+  //i2c_writeReg(LSM330_ACC_ADDRESS ,0x23 ,0x38 ); // 16G
+
   delay(5);
   i2c_writeReg(LSM330_ACC_ADDRESS,0x21,0x00);// no high-pass filter
 }
@@ -1479,9 +1479,9 @@ void ACC_init () {
 }
 ////////////////////////////////////
 //            ACC end             //
-////////////////////////////////////	
-	
-////////////////////////////////////	
+////////////////////////////////////
+
+////////////////////////////////////
 //           Gyro start           //
 ////////////////////////////////////
 void Gyro_init() {
@@ -1563,19 +1563,19 @@ void Gyro_getADC() {
     for (axis = 0; axis < 3; axis++) {imu.gyroADC[axis]=0;imu.accADC[axis]=0;}
     imu.accADC[YAW] = ACC_1G;
     f.NUNCHUKDATA = 0;
-  } 
+  }
 
   // Wii Motion Plus Data
   if ( (rawADC[5]&0x03) == 0x02 ) {
-    // Assemble 14bit data 
+    // Assemble 14bit data
     imu.gyroADC[ROLL]  = - ( ((rawADC[5]>>2)<<8) | rawADC[2] ); //range: +/- 8192
     imu.gyroADC[PITCH] = - ( ((rawADC[4]>>2)<<8) | rawADC[1] );
     imu.gyroADC[YAW]  =  - ( ((rawADC[3]>>2)<<8) | rawADC[0] );
     GYRO_Common();
     // Check if slow bit is set and normalize to fast mode range
-    imu.gyroADC[ROLL]  = (rawADC[3]&0x01)     ? imu.gyroADC[ROLL]/5  : imu.gyroADC[ROLL];  //the ratio 1/5 is not exactly the IDG600 or ISZ650 specification 
+    imu.gyroADC[ROLL]  = (rawADC[3]&0x01)     ? imu.gyroADC[ROLL]/5  : imu.gyroADC[ROLL];  //the ratio 1/5 is not exactly the IDG600 or ISZ650 specification
     imu.gyroADC[PITCH] = (rawADC[4]&0x02)>>1  ? imu.gyroADC[PITCH]/5 : imu.gyroADC[PITCH]; //we detect here the slow of fast mode WMP gyros values (see wiibrew for more details)
-    imu.gyroADC[YAW]   = (rawADC[3]&0x02)>>1  ? imu.gyroADC[YAW]/5   : imu.gyroADC[YAW];   // this step must be done after zero compensation    
+    imu.gyroADC[YAW]   = (rawADC[3]&0x02)>>1  ? imu.gyroADC[YAW]/5   : imu.gyroADC[YAW];   // this step must be done after zero compensation
     f.NUNCHUKDATA = 0;
   #if defined(NUNCHUCK)
     } else if ( (rawADC[5]&0x03) == 0x00 ) { // Nunchuk Data
@@ -1613,23 +1613,23 @@ void Gyro_getADC() {
 // the code will move new sonars to the next available sonar address in range of F0-FE so that another
 // sonar sensor can be added again.
 // Thus, add only 1 sonar sensor at a time, poweroff, then wire the next, power on, wait for flashing light and repeat
-#if !defined(SRF08_DEFAULT_ADDRESS) 
+#if !defined(SRF08_DEFAULT_ADDRESS)
   #define SRF08_DEFAULT_ADDRESS 0x70
 #endif
 
-#if !defined(SRF08_RANGE_WAIT) 
+#if !defined(SRF08_RANGE_WAIT)
   #define SRF08_RANGE_WAIT     80000      // delay between Ping and Range Read commands
 #endif
 
-#if !defined(SRF08_RANGE_SLEEP) 
+#if !defined(SRF08_RANGE_SLEEP)
   #define SRF08_RANGE_SLEEP    35000      // sleep this long before starting another Ping
 #endif
 
-#if !defined(SRF08_SENSOR_FIRST) 
+#if !defined(SRF08_SENSOR_FIRST)
   #define SRF08_SENSOR_FIRST    0xF0    // the first sensor i2c address (after it has been moved)
 #endif
 
-#if !defined(SRF08_MAX_SENSORS) 
+#if !defined(SRF08_MAX_SENSORS)
   #define SRF08_MAX_SENSORS    4        // maximum number of sensors we'll allow (can go up to 8)
 #endif
 
@@ -1665,7 +1665,7 @@ uint16_t i2c_try_readReg(uint8_t add, uint8_t reg) {
   i2c_rep_start(add<<1);  // I2C write direction
   i2c_write(reg);        // register selection
   i2c_rep_start((add<<1)|1);  // I2C read direction
-  
+
   TWCR = (1<<TWINT) | (1<<TWEN);
   while (!(TWCR & (1<<TWINT))) {
     count--;
@@ -1674,10 +1674,10 @@ uint16_t i2c_try_readReg(uint8_t add, uint8_t reg) {
       return 0xffff;  // return failure to read
     }
   }
-  
+
   uint8_t r = TWDR;
   i2c_stop();
-  return r;  
+  return r;
 }
 
 // read a 16bit unsigned int from the i2c bus
@@ -1718,7 +1718,7 @@ void i2c_srf08_discover() {
       addr += 2;
     }
   }
-  
+
   // do not add sensors if we are already maxed
   if(srf08_ctx.sensors < SRF08_MAX_SENSORS) {
     // now determine if any sensor is on the 'new sensor' address (srf08 default address)
@@ -1733,18 +1733,18 @@ void i2c_srf08_discover() {
 }
 
 void Sonar_update() {
-  if (currentTime < srf08_ctx.deadline || (srf08_ctx.state==0 && f.ARMED)) return; 
+  if (currentTime < srf08_ctx.deadline || (srf08_ctx.state==0 && f.ARMED)) return;
   srf08_ctx.deadline = currentTime;
   TWBR = ((F_CPU / 400000L) - 16) / 2; // change the I2C clock rate to 400kHz, SRF08 is ok with this speed
   switch (srf08_ctx.state) {
-    case 0: 
+    case 0:
       i2c_srf08_discover();
       if(srf08_ctx.sensors>0)
-        srf08_ctx.state++; 
+        srf08_ctx.state++;
       else
         srf08_ctx.deadline += 5000000; // wait 5 secs before trying search again
       break;
-    case 1: 
+    case 1:
       srf08_ctx.current=0;
       srf08_ctx.state++;
       srf08_ctx.deadline += SRF08_RANGE_SLEEP;
@@ -1756,7 +1756,7 @@ void Sonar_update() {
       srf08_ctx.state++;
       srf08_ctx.deadline += SRF08_RANGE_WAIT;
       break;
-    case 3: 
+    case 3:
       srf08_ctx.range[srf08_ctx.current] = i2c_readReg16( SRF08_SENSOR_FIRST+(srf08_ctx.current<<1), SRF08_ECHO_RANGE);
       srf08_ctx.current++;
       if(srf08_ctx.current >= srf08_ctx.sensors)
@@ -1769,18 +1769,71 @@ void Sonar_update() {
       srf08_ctx.state++;
       srf08_ctx.deadline += SRF08_RANGE_WAIT;
       break;
-    case 3: 
+    case 3:
       srf08_ctx.range[srf08_ctx.current] = i2c_readReg16(SRF08_SENSOR_FIRST+(srf08_ctx.current<<1), SRF08_ECHO_RANGE);
       srf08_ctx.current++;
       if(srf08_ctx.current >= srf08_ctx.sensors)
         srf08_ctx.state=1;
       else
-        srf08_ctx.state=2; 
+        srf08_ctx.state=2;
       break;
 #endif
-  } 
+  }
 sonarAlt = srf08_ctx.range[0]; //tmp
 }
+
+#elif defined(SONAR_GENERIC_ECHOPULSE)
+
+volatile unsigned long SONAR_GEP_startTime = 0;
+volatile unsigned long SONAR_GEP_echoTime = 0;
+volatile static int32_t  tempSonarAlt=0;
+static unsigned long lastPing = 0;
+
+void Sonar_update()
+{
+  long diffEcho = micros() - SONAR_GEP_startTime;
+  long diffPing = millis() - lastPing;
+
+  if (diffEcho >= SONAR_GENERIC_MAX_RANGE * SONAR_GENERIC_SCALE)
+    sonarAlt = -1;
+  else
+    sonarAlt=tempSonarAlt;
+
+  if (diffPing > 60) {
+    /*static int32_t sonarTempDistance=0;
+    sonarTempDistance = (sonarTempDistance - (sonarTempDistance >> 3)) + sonarAlt;
+    sonarAlt= sonarTempDistance >> 3;*/
+    SONAR_GEP_TriggerPin_PIN_LOW;
+    delayMicroseconds(2);
+    SONAR_GEP_TriggerPin_PIN_HIGH;
+    delayMicroseconds(10);
+    SONAR_GEP_TriggerPin_PIN_LOW;
+    lastPing = millis();
+  }
+}
+
+void Sonar_init()
+{
+  SONAR_GEP_EchoPin_PCICR;
+  SONAR_GEP_EchoPin_PCMSK;
+  SONAR_GEP_EchoPin_PINMODE_IN;
+  SONAR_GEP_TriggerPin_PINMODE_OUT;
+  Sonar_update();
+}
+
+ISR(SONAR_GEP_EchoPin_PCINT_vect) {
+  if (SONAR_GEP_EchoPin_PIN & (1<<SONAR_GEP_EchoPin_PCINT)) {
+    SONAR_GEP_startTime = micros();
+  }
+  else {
+    SONAR_GEP_echoTime = micros() - SONAR_GEP_startTime;
+    if (SONAR_GEP_echoTime <= SONAR_GENERIC_MAX_RANGE*SONAR_GENERIC_SCALE)
+      tempSonarAlt = SONAR_GEP_echoTime / SONAR_GENERIC_SCALE;
+    else
+      tempSonarAlt = -1;
+  }
+}
+
 #else
 inline void Sonar_init() {}
 void Sonar_update() {}

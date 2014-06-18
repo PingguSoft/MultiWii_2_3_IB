@@ -260,7 +260,7 @@ void getEstimatedAttitude(){
     value += deadband;                  \
   }
 
-#if BARO || SONAR
+#if defined(BARO) || defined(SONAR)
 uint8_t getEstimatedAltitude(){
   int32_t  BaroAlt;
   static float baroGroundTemperatureScale,logBaroGroundPressureSum;
@@ -289,9 +289,9 @@ uint8_t getEstimatedAltitude(){
     static int16_t lastSonarAlt = 0;
   #endif
 
-  #if BARO && !SONAR //baro alone
+  #if defined(BARO) && !defined(SONAR) //baro alone
     alt.EstAlt = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 夷뎤)
-  #elif SONAR && !BARO  //sonar alone
+  #elif defined(SONAR) && !defined(BARO)  //sonar alone
     // LOG: for now, keep the last good reading and no more than max alt
     if(sonarAlt <0 || sonarAlt> SONAR_MAX_HOLD)
       sonarAlt = lastSonarAlt;
@@ -301,7 +301,7 @@ uint8_t getEstimatedAltitude(){
     // LOG: need for LPF ? if yes, value ?
     // LOG: trying 1/9 ratio (a little sloppy if using same pid than baro, need more agressive pid)
     alt.EstAlt = alt.EstAlt * SONAR_BARO_LPF_LC + sonarAlt * (1 - SONAR_BARO_LPF_LC);
-  #elif SONAR && BARO  //fusion
+  #elif defined(SONAR) && defined(BARO)  //fusion
     // LOG: I would like some manually way to set offset....
     // LOG: if you take off from a chair/desk/something higher than the "real" ground, when switching to sonar and low cut fusion
     // LOG: the home offset will be higher than the ground and maybe mess up things...

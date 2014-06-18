@@ -3,7 +3,7 @@
 
 #define BARO_TAB_SIZE   21
 
-#if BARO
+#if defined(BARO) || defined(SONAR)
 uint8_t getEstimatedAltitude();
 #endif
 

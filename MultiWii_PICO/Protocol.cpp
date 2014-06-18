@@ -375,7 +375,7 @@ void evaluateCommand() {
        if(f.ANGLE_MODE)   tmp |= 1<<BOXANGLE;
        if(f.HORIZON_MODE) tmp |= 1<<BOXHORIZON;
      #endif
-     #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
+     #if (defined(BARO) || defined(SONAR)) && (!defined(SUPPRESS_BARO_ALTHOLD))
        if(f.BARO_MODE) tmp |= 1<<BOXBARO;
      #endif
      #if MAG
@@ -392,7 +392,7 @@ void evaluateCommand() {
        if(rcOptions[BOXCAMTRIG]) tmp |= 1<<BOXCAMTRIG;
      #endif
      #if GPS
-       if(f.GPS_HOME_MODE) tmp |= 1<<BOXGPSHOME; 
+       if(f.GPS_HOME_MODE) tmp |= 1<<BOXGPSHOME;
        if(f.GPS_HOLD_MODE) tmp |= 1<<BOXGPSHOLD;
      #endif
      #if defined(FIXEDWING) || defined(HELICOPTER)

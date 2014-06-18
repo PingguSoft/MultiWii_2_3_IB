@@ -9,13 +9,13 @@
   #define I2C_SPEED 400000L
   #define MPU6050       //combo + ACC
   #define MPU6050_LPF_42HZ
-  //#define MS561101BA
-  //#define HMC5883
+  #define HMC5883
   #define FORCE_ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  =  Y; imu.accADC[PITCH]  = -X; imu.accADC[YAW]  = Z;}
   #define FORCE_GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  X; imu.gyroADC[PITCH] =  Y; imu.gyroADC[YAW] = -Z;}
-  #define FORCE_MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  =  Y; imu.magADC[PITCH]  = -X; imu.magADC[YAW]  = -Z;}
+  #define FORCE_MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  = -X; imu.magADC[PITCH]  = -Y; imu.magADC[YAW]  = -Z;}
   #define FAILSAFE
   #define BUZZER
+//  #define RCAUXPIN12
 
     /* for V BAT monitoring
        after the resistor divisor we should get [0V;5V]->[0;1023] on analog V_BATPIN
@@ -33,20 +33,44 @@
   #define EXT_MOTOR_RANGE
   #define MOTOR_STOP
   #define DEADBAND 24
+
+#if 1
+  // SONAR
+  /* Generic sonar: hc-sr04, srf04, dyp-me007, all generic sonar with echo/pulse pin
+     default pulse is PH6/12, echo is PB4/11
+  */
+  #define SONAR_GENERIC_ECHOPULSE
+  #define SONAR_GENERIC_SCALE       58 //scale for ranging conversion (hcsr04 is 58)
+  #define SONAR_GENERIC_MAX_RANGE   400 //cm (could be more)
+
+  /************************* Sonar alt hold / precision / ground collision keeper *******/
+  //#define SONAR_TILT_CORRECTION //correct ranging from quad inclinaison, may works or not, depends of beam shape, ultrasonic absorption, sensibility of environnement, etc...
+  //will not be applyed if hypo is longer than max range of course and no more than 30/40° correction
+
+  #define SONAR_MAX_HOLD 380 //cm, kind of error delimiter, for now to avoid rocket climbing, only usefull if no baro
+
+  //if using baro + sonar
+  #define SONAR_BARO_FUSION_LC 250 //cm, baro/sonar readings fusion, low cut, below = full sonar
+  #define SONAR_BARO_FUSION_HC 300 //cm, baro/sonar readings fusion, high cut, above = full baro
+  #define SONAR_BARO_FUSION_RATIO 0.0 //0.0-1.0,  baro/sonar readings fusion, amount of each sensor value, 0 = proportionnel between LC and HC
+  #define SONAR_BARO_LPF_LC 0.9f
+  #define SONAR_BARO_LPF_HC 0.9f
 #endif
 
 #if defined(SONAR_GENERIC_ECHOPULSE)
   #define SONAR_GEP_TriggerPin             12
   #define SONAR_GEP_TriggerPin_PINMODE_OUT pinMode(SONAR_GEP_TriggerPin,OUTPUT);
-  #define SONAR_GEP_TriggerPin_PIN_HIGH    PORTB |= 1<<6;
-  #define SONAR_GEP_TriggerPin_PIN_LOW     PORTB &= ~(1<<6);
-  #define SONAR_GEP_EchoPin                11
+  #define SONAR_GEP_TriggerPin_PIN_HIGH    PORTB |= 1<<4;
+  #define SONAR_GEP_TriggerPin_PIN_LOW     PORTB &= ~(1<<4);
+
+  #define SONAR_GEP_EchoPin                A2
   #define SONAR_GEP_EchoPin_PINMODE_IN     pinMode(SONAR_GEP_EchoPin,INPUT);
-  #define SONAR_GEP_EchoPin_PCINT          PCINT5
-  #define SONAR_GEP_EchoPin_PCICR          PCICR |= (1<<PCIE0); // PCINT 0-7 belong to PCIE0
-  #define SONAR_GEP_EchoPin_PCMSK          PCMSK0 = (1<<SONAR_GEP_EchoPin_PCINT); // Mask Pin PCINT5 - all other PIns PCINT0-7 are not allowed to create interrupts!
-  #define SONAR_GEP_EchoPin_PCINT_vect     PCINT0_vect  // PCINT0-7 belog PCINT0_vect
-  #define SONAR_GEP_EchoPin_PIN            PINB  // PCINT0-7 belong to PINB
+  #define SONAR_GEP_EchoPin_PCINT          PCINT10
+  #define SONAR_GEP_EchoPin_PCICR          PCICR |= (1<<PCIE1); // PCINT 8-13 belong to PCIE1
+  #define SONAR_GEP_EchoPin_PCMSK          PCMSK1 = (1<<SONAR_GEP_EchoPin_PCINT); // Mask Pin PCINT5 - all other PIns PCINT0-7 are not allowed to create interrupts!
+  #define SONAR_GEP_EchoPin_PCINT_vect     PCINT1_vect  // PCINT8-13 belog PCINT1_vect
+  #define SONAR_GEP_EchoPin_PIN            PINC  // PCINT8-13 belong to PINC
+#endif
 #endif
 
 #if COPTERTEST == 1
@@ -1680,7 +1704,7 @@
   #define GPS 0
 #endif
 
-#if defined(SRF02) || defined(SRF08) || defined(SRF10) || defined(SRC235) || defined(I2C_GPS_SONAR)
+#if defined(SRF02) || defined(SRF08) || defined(SRF10) || defined(SRC235) || defined(I2C_GPS_SONAR) || defined(SONAR_GENERIC_ECHOPULSE)
   #define SONAR 1
 #else
   #define SONAR 0

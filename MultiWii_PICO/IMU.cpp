@@ -115,13 +115,13 @@ void computeIMU () {
 #define INV_GYR_CMPF_FACTOR   (1.0f / (GYR_CMPF_FACTOR  + 1.0f))
 #define INV_GYR_CMPFM_FACTOR  (1.0f / (GYR_CMPFM_FACTOR + 1.0f))
 
-typedef struct fp_vector {		
-  float X,Y,Z;		
+typedef struct fp_vector {
+  float X,Y,Z;
 } t_fp_vector_def;
 
-typedef union {		
-  float A[3];		
-  t_fp_vector_def V;		
+typedef union {
+  float A[3];
+  t_fp_vector_def V;
 } t_fp_vector;
 
 typedef struct int32_t_vector {
@@ -149,13 +149,13 @@ int16_t _atan2(int32_t y, int32_t x){
   return a;
 }
 
-float InvSqrt (float x){ 
-  union{  
-    int32_t i;  
-    float   f; 
-  } conv; 
-  conv.f = x; 
-  conv.i = 0x5f3759df - (conv.i >> 1); 
+float InvSqrt (float x){
+  union{
+    int32_t i;
+    float   f;
+  } conv;
+  conv.f = x;
+  conv.i = 0x5f3759df - (conv.i >> 1);
   return 0.5f * conv.f * (3.0f - x * conv.f * conv.f);
 }
 
@@ -213,13 +213,13 @@ void getEstimatedAttitude(){
   for (axis = 0; axis < 3; axis++) {
     if ( validAcc )
       EstG.A[axis] = (EstG.A[axis] * GYR_CMPF_FACTOR + imu.accSmooth[axis]) * INV_GYR_CMPF_FACTOR;
-    EstG32.A[axis] = EstG.A[axis]; //int32_t cross calculation is a little bit faster than float	
+    EstG32.A[axis] = EstG.A[axis]; //int32_t cross calculation is a little bit faster than float
     #if MAG
       EstM.A[axis] = (EstM.A[axis] * GYR_CMPFM_FACTOR  + imu.magADC[axis]) * INV_GYR_CMPFM_FACTOR;
       EstM32.A[axis] = EstM.A[axis];
     #endif
   }
-  
+
   if ((int16_t)EstG32.A[2] > ACCZ_25deg)
     f.SMALL_ANGLES_25 = 1;
   else
@@ -234,14 +234,14 @@ void getEstimatedAttitude(){
   #if MAG
     att.heading = _atan2(
       EstM32.V.Z * EstG32.V.X - EstM32.V.X * EstG32.V.Z,
-      (EstM.V.Y * sqGX_sqGZ  - (EstM32.V.X * EstG32.V.X + EstM32.V.Z * EstG32.V.Z) * EstG.V.Y)*invG ); 
+      (EstM.V.Y * sqGX_sqGZ  - (EstM32.V.X * EstG32.V.X + EstM32.V.Z * EstG32.V.Z) * EstG.V.Y)*invG );
     att.heading += conf.mag_declination; // Set from GUI
     att.heading /= 10;
   #endif
 
   #if defined(THROTTLE_ANGLE_CORRECTION)
-    cosZ = EstG.V.Z / ACC_1G * 100.0f;                                                        // cos(angleZ) * 100 
-    throttleAngleCorrection = THROTTLE_ANGLE_CORRECTION * constrain(100 - cosZ, 0, 100) >>3;  // 16 bit ok: 200*150 = 30000  
+    cosZ = EstG.V.Z / ACC_1G * 100.0f;                                                        // cos(angleZ) * 100
+    throttleAngleCorrection = THROTTLE_ANGLE_CORRECTION * constrain(100 - cosZ, 0, 100) >>3;  // 16 bit ok: 200*150 = 30000
   #endif
 }
 
@@ -260,7 +260,7 @@ void getEstimatedAttitude(){
     value += deadband;                  \
   }
 
-#if BARO
+#if defined(BARO) || defined(SONAR)
 uint8_t getEstimatedAltitude(){
   int32_t  BaroAlt;
   static float baroGroundTemperatureScale,logBaroGroundPressureSum;
@@ -273,17 +273,73 @@ uint8_t getEstimatedAltitude(){
   if (dTime < UPDATE_INTERVAL) return 0;
   previousT = currentT;
 
-  if(calibratingB > 0) {
-    logBaroGroundPressureSum = log(baroPressureSum);
-    baroGroundTemperatureScale = (baroTemperature + 27315) *  29.271267f;
-    calibratingB--;
-  }
+  #if BARO
+    if(calibratingB > 0) {
+      logBaroGroundPressureSum = log(baroPressureSum);
+      baroGroundTemperatureScale = (baroTemperature + 27315) *  29.271267f;
+      calibratingB--;
+    }
 
-  // baroGroundPressureSum is not supposed to be 0 here
-  // see: https://code.google.com/p/ardupilot-mega/source/browse/libraries/AP_Baro/AP_Baro.cpp
-  BaroAlt = ( logBaroGroundPressureSum - log(baroPressureSum) ) * baroGroundTemperatureScale;
+    // baroGroundPressureSum is not supposed to be 0 here
+    // see: https://code.google.com/p/ardupilot-mega/source/browse/libraries/AP_Baro/AP_Baro.cpp
+    BaroAlt = ( logBaroGroundPressureSum - log(baroPressureSum) ) * baroGroundTemperatureScale;
+  #endif
 
-  alt.EstAlt = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 µs)
+  #if SONAR
+    static int16_t lastSonarAlt = 0;
+  #endif
+
+  #if defined(BARO) && !defined(SONAR) //baro alone
+    alt.EstAlt = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 夷뎤)
+  #elif defined(SONAR) && !defined(BARO)  //sonar alone
+    // LOG: for now, keep the last good reading and no more than max alt
+    if(sonarAlt <0 || sonarAlt> SONAR_MAX_HOLD)
+      sonarAlt = lastSonarAlt;
+    else
+      lastSonarAlt = sonarAlt;
+
+    // LOG: need for LPF ? if yes, value ?
+    // LOG: trying 1/9 ratio (a little sloppy if using same pid than baro, need more agressive pid)
+    alt.EstAlt = sonarAlt; //alt.EstAlt * 0.3f + sonarAlt * 0.7f; //SONAR_BARO_LPF_LC + sonarAlt * (1 - SONAR_BARO_LPF_LC);
+  #elif defined(SONAR) && defined(BARO)  //fusion
+    // LOG: I would like some manually way to set offset....
+    // LOG: if you take off from a chair/desk/something higher than the "real" ground, when switching to sonar and low cut fusion
+    // LOG: the home offset will be higher than the ground and maybe mess up things...
+    if(!f.ARMED) { //init offset till motors not armed
+      BaroHome = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // play with optimal coef. here
+    }
+
+    if(sonarAlt < 0 || sonarAlt > SONAR_MAX_HOLD)
+      sonarAlt = lastSonarAlt;
+    else
+      lastSonarAlt = sonarAlt;
+
+    debug[2] = sonarAlt;
+    debug[3] = BaroHome;
+
+    if(sonarAlt > 0 && sonarAlt < SONAR_BARO_FUSION_LC) {
+      // LOG: same as sonar alone
+      // LOG: need for LPF ? if yes, value ?
+      // LOG: trying 1/9 ratio (same as sonar alone, and as we share same pid conf than baro, we can't have two separate config, 1/9 is too much for my config, need raw values)
+//      alt.EstAlt = alt.EstAlt*0.1f + (BaroHome+sonarAlt)*0.9f;
+      alt.EstAlt = alt.EstAlt * SONAR_BARO_LPF_LC + (BaroHome + sonarAlt) * (1 - SONAR_BARO_LPF_LC);
+   } else if(sonarAlt > 0 && sonarAlt < SONAR_BARO_FUSION_HC) {
+
+      float fade = SONAR_BARO_FUSION_RATIO;
+      if(fade==0.0)
+        fade = ((float)(SONAR_BARO_FUSION_HC-sonarAlt))/(SONAR_BARO_FUSION_HC-SONAR_BARO_FUSION_LC);
+      fade = constrain(fade, 0.0f, 1.0f);
+
+      // LOG: will LPF should be faded too ? sonar is less sloppy than baro and will be oversmoothed
+      // LOG: try same as baro alone 6/4 ratio (same as above about smoothing)
+      alt.EstAlt = alt.EstAlt * SONAR_BARO_LPF_HC + ((BaroHome + sonarAlt) * fade +
+        (BaroAlt) * (1 - fade)) * (1 - SONAR_BARO_LPF_HC);
+    } else {
+      // LOG:same as baro
+      alt.EstAlt = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 µs)
+    }
+  #endif
+  debug[1] = AltHold;
 
   #if (defined(VARIOMETER) && (VARIOMETER != 2)) || !defined(SUPPRESS_BARO_ALTHOLD)
     //P
@@ -295,7 +351,7 @@ uint8_t getEstimatedAltitude(){
     errorAltitudeI += conf.pid[PIDALT].I8 * error16 >>6;
     errorAltitudeI = constrain(errorAltitudeI,-30000,30000);
     BaroPID += errorAltitudeI>>9; //I in range +/-60
- 
+
     // projection of ACC vector to global Z, with 1G subtructed
     // Math: accZ = A * G / |G| - 1G
     int16_t accZ = (imu.accSmooth[ROLL] * EstG32.V.X + imu.accSmooth[PITCH] * EstG32.V.Y + imu.accSmooth[YAW] * EstG32.V.Z) * invG;
@@ -304,7 +360,7 @@ uint8_t getEstimatedAltitude(){
     if (!f.ARMED) {
       accZoffset -= accZoffset>>3;
       accZoffset += accZ;
-    }  
+    }
     accZ -= accZoffset>>3;
     applyDeadband(accZ, ACC_Z_DEADBAND);
 
@@ -319,7 +375,7 @@ uint8_t getEstimatedAltitude(){
     // Integrator - velocity, cm/sec
     vel += accZ * ACC_VelScale * dTime;
 
-    // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity). 
+    // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity).
     // By using CF it's possible to correct the drift of integrated accZ (velocity) without loosing the phase, i.e without delay
     vel = vel * 0.985f + baroVel * 0.015f;
 
