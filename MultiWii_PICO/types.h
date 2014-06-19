@@ -44,6 +44,10 @@ enum box {
   #endif
   #if MAG
     BOXMAG,
+  #else
+    BOXHEADHOLD,
+  #endif
+  #if defined(HEADFREE)
     BOXHEADFREE,
     BOXHEADADJ, // acquire heading for HEADFREE mode
   #endif

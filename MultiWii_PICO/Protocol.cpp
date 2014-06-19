@@ -381,9 +381,13 @@ void evaluateCommand() {
      #if MAG
        if(f.MAG_MODE) tmp |= 1<<BOXMAG;
        #if !defined(FIXEDWING)
-         if(f.HEADFREE_MODE)       tmp |= 1<<BOXHEADFREE;
-         if(rcOptions[BOXHEADADJ]) tmp |= 1<<BOXHEADADJ;
+         #if defined(HEADFREE)
+           if(f.HEADFREE_MODE)       tmp |= 1<<BOXHEADFREE;
+           if(rcOptions[BOXHEADADJ]) tmp |= 1<<BOXHEADADJ;
+         #endif
        #endif
+     #else
+       if(f.MAG_MODE) tmp |= 1<<BOXHEADHOLD;
      #endif
      #if defined(SERVO_TILT) || defined(GIMBAL)|| defined(SERVO_MIX_TILT)
        if(rcOptions[BOXCAMSTAB]) tmp |= 1<<BOXCAMSTAB;

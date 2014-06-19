@@ -57,6 +57,10 @@ const char boxnames[] PROGMEM = // names for dynamic generation of config GUI
   #endif
   #if MAG
     "MAG;"
+  #else
+    "HEADHOLD;"
+  #endif
+  #if defined(HEADFREE)
     "HEADFREE;"
     "HEADADJ;"
   #endif
@@ -108,6 +112,10 @@ const uint8_t boxids[] PROGMEM = {// permanent IDs associated to boxes. This way
   #endif
   #if MAG
     5, //"MAG;"
+  #else
+    5, //"HEADHOLD"
+  #endif
+  #if defined(HEADFREE)
     6, //"HEADFREE;"
     7, //"HEADADJ;"
   #endif
@@ -366,6 +374,7 @@ void annexCode() { // this code is excetuted at each loop and won't interfere wi
   tmp2 = tmp/256; // range [0;9]
   rcCommand[THROTTLE] = lookupThrottleRC[tmp2] + (tmp-tmp2*256) * (lookupThrottleRC[tmp2+1]-lookupThrottleRC[tmp2]) / 256; // [0;2559] -> expo -> [conf.minthrottle;MAXTHROTTLE]
 
+#if defined(HEADFREE)
   if(f.HEADFREE_MODE) { //to optimize
     float radDiff = (att.heading - headFreeModeHold) * 0.0174533f; // where PI/180 ~= 0.0174533
     float cosDiff = cos(radDiff);
@@ -374,6 +383,7 @@ void annexCode() { // this code is excetuted at each loop and won't interfere wi
     rcCommand[ROLL] =  rcCommand[ROLL]*cosDiff - rcCommand[PITCH]*sinDiff;
     rcCommand[PITCH] = rcCommand_PITCH;
   }
+#endif
 
   // query at most one multiplexed analog channel per MWii cycle
   static uint8_t analogReader =0;
@@ -703,7 +713,9 @@ void go_arm() {
     ) {
     if(!f.ARMED && !f.BARO_MODE) { // arm now!
       f.ARMED = 1;
+  #if defined(HEADFREE)
       headFreeModeHold = att.heading;
+  #endif
       magHold = att.heading;
       #if defined(VBAT)
         if (analog.vbat > NO_VBAT) vbatMin = analog.vbat;
@@ -1017,20 +1029,31 @@ void loop () {
       } else {
         f.MAG_MODE = 0;
       }
-      if (rcOptions[BOXHEADFREE]) {
-        if (!f.HEADFREE_MODE) {
-          f.HEADFREE_MODE = 1;
+      #if defined(HEADFREE)
+        if (rcOptions[BOXHEADFREE]) {
+          if (!f.HEADFREE_MODE) {
+            f.HEADFREE_MODE = 1;
+          }
+  	    #if defined(ADVANCED_HEADFREE)
+  		    if ((f.GPS_FIX && GPS_numSat >= 5) && (GPS_distanceToHome > ADV_HEADFREE_RANGE) ) {
+              if (GPS_directionToHome < 180)  {headFreeModeHold = GPS_directionToHome + 180;} else {headFreeModeHold = GPS_directionToHome - 180;}
+          }
+        #endif
+        } else {
+          f.HEADFREE_MODE = 0;
         }
-	  #if defined(ADVANCED_HEADFREE)
-		if ((f.GPS_FIX && GPS_numSat >= 5) && (GPS_distanceToHome > ADV_HEADFREE_RANGE) ) {
-            if (GPS_directionToHome < 180)  {headFreeModeHold = GPS_directionToHome + 180;} else {headFreeModeHold = GPS_directionToHome - 180;}
-         }
+        if (rcOptions[BOXHEADADJ]) {
+          headFreeModeHold = att.heading; // acquire new heading
+        }
       #endif
+    #else
+      if (rcOptions[BOXHEADHOLD]) {
+        if (!f.MAG_MODE) {
+          f.MAG_MODE = 1;
+          magHold = att.heading;
+        }
       } else {
-        f.HEADFREE_MODE = 0;
-      }
-      if (rcOptions[BOXHEADADJ]) {
-        headFreeModeHold = att.heading; // acquire new heading
+        f.MAG_MODE = 0;
       }
     #endif
 
@@ -1158,6 +1181,16 @@ void loop () {
       if (dif >= + 180) dif -= 360;
       if ( f.SMALL_ANGLES_25 ) rcCommand[YAW] -= dif*conf.pid[PIDMAG].P8>>5;
     } else magHold = att.heading;
+  #else
+    if(f.MAG_MODE) { 
+      int16_t dif = att.heading - magHold;
+      if (dif <= - 180) dif += 360;
+        if (dif >= + 180) dif -= 360;
+          dif = constrain(dif,-100,100);
+        rcCommand[YAW] -= (dif*conf.pid[PIDMAG].P8) >> 5;
+    } else {
+      magHold = att.heading;
+    }
   #endif
 
   #if (defined(BARO) || defined(SONAR)) && (!defined(SUPPRESS_BARO_ALTHOLD))

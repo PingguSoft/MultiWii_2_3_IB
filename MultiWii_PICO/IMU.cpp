@@ -176,6 +176,9 @@ static t_int32_t_vector EstG32;
 #if MAG
   static t_int32_t_vector EstM32;
   static t_fp_vector EstM;
+#else
+  static t_fp_vector EstN = { 1000.0, 0.0, 0.0 };
+  static t_int32_t_vector EstN32;
 #endif
 
 void getEstimatedAttitude(){
@@ -203,6 +206,8 @@ void getEstimatedAttitude(){
   rotateV(&EstG.V,deltaGyroAngle);
   #if MAG
     rotateV(&EstM.V,deltaGyroAngle);
+  #else
+    rotateV(&EstN.V,deltaGyroAngle);
   #endif
 
   accMag = accMag*100/((int32_t)ACC_1G*ACC_1G);
@@ -217,6 +222,8 @@ void getEstimatedAttitude(){
     #if MAG
       EstM.A[axis] = (EstM.A[axis] * GYR_CMPFM_FACTOR  + imu.magADC[axis]) * INV_GYR_CMPFM_FACTOR;
       EstM32.A[axis] = EstM.A[axis];
+    #else
+      EstN32.A[axis] = EstN.A[axis];
     #endif
   }
 
@@ -237,6 +244,11 @@ void getEstimatedAttitude(){
       (EstM.V.Y * sqGX_sqGZ  - (EstM32.V.X * EstG32.V.X + EstM32.V.Z * EstG32.V.Z) * EstG.V.Y)*invG );
     att.heading += conf.mag_declination; // Set from GUI
     att.heading /= 10;
+    #else
+      att.heading = _atan2(
+      EstN32.V.Z * EstG32.V.X - EstN32.V.X * EstG32.V.Z,
+      EstN32.V.Y * invG * sqGX_sqGZ - (EstN32.V.X * EstG32.V.X + EstN32.V.Z * EstG32.V.Z) * invG * EstG32.V.Y);
+      att.heading /= 10;
   #endif
 
   #if defined(THROTTLE_ANGLE_CORRECTION)
