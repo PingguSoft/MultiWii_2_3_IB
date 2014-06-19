@@ -1115,10 +1115,7 @@ void loop () {
       case 4:
         taskOrder++;
         #if SONAR
-          Sonar_update();
-		      #if !defined(BARO)
-		        alt.EstAlt = sonarAlt;
-		      #endif
+          Sonar_update(); //debug[2] = sonarAlt;
         #endif
         #ifdef LANDING_LIGHTS_DDR
           auto_switch_landing_lights();

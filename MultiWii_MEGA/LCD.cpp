@@ -951,7 +951,7 @@ const char PROGMEM lcd_param_text07 [] = "Pitch    D";
 const char PROGMEM lcd_param_text08 [] = "Yaw      P";
 const char PROGMEM lcd_param_text09 [] = "Yaw      I";
 const char PROGMEM lcd_param_text10 [] = "Yaw      D";
-#if  (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+#if  (defined(BARO) || defined(SONAR)) && (!defined(SUPPRESS_BARO_ALTHOLD))
 const char PROGMEM lcd_param_text11 [] = "Alt      P";
 const char PROGMEM lcd_param_text12 [] = "Alt      I";
 const char PROGMEM lcd_param_text13 [] = "Alt      D";
@@ -1098,7 +1098,7 @@ PROGMEM const void * const lcd_param_ptr_table [] = {
   &lcd_param_text08, &conf.pid[YAW].P8, &__P,
   &lcd_param_text09, &conf.pid[YAW].I8, &__I,
   &lcd_param_text10, &conf.pid[YAW].D8, &__D,
-#if (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+#if (defined(BARO) || defined(SONAR)) && (!defined(SUPPRESS_BARO_ALTHOLD))
   &lcd_param_text11, &conf.pid[PIDALT].P8, &__P,
   &lcd_param_text12, &conf.pid[PIDALT].I8, &__I,
   &lcd_param_text13, &conf.pid[PIDALT].D8, &__D,
@@ -1146,7 +1146,7 @@ PROGMEM const void * const lcd_param_ptr_table [] = {
       &lcd_param_text42, &conf.activate[BOXHORIZON], &__AUX4,
     #endif
   #endif
-  #if (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+  #if (defined(BARO) || defined(SONAR)) && (!defined(SUPPRESS_BARO_ALTHOLD))
     &lcd_param_text43, &conf.activate[BOXBARO], &__AUX1,
     #ifndef SUPPRESS_LCD_CONF_AUX2
       &lcd_param_text43, &conf.activate[BOXBARO], &__AUX2,
@@ -1831,7 +1831,7 @@ static char checkboxitemNames[][4] = {
     #if ACC
       "Ang","Hor",
     #endif
-    #if (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+    #if (defined(BARO) || defined(SONAR)) && (!defined(SUPPRESS_BARO_ALTHOLD))
       "Bar",
     #endif
     #ifdef VARIOMETER
@@ -2208,7 +2208,7 @@ void lcd_telemetry() {
           }
           break;
         case 6:// height
-          #if (BARO || SONAR)
+          #if (defined(BARO) || defined(SONAR))
             {
               int16_t h = alt.EstAlt / 100;
               LCDprint('A'); LCDprintInt16(h); LCDprint('m');
@@ -2502,7 +2502,7 @@ void lcd_telemetry() {
         cycleTimeMax = 0;
         cycleTimeMin = 65535;
       #endif
-      #if (BARO || SONAR)
+      #if (defined(BARO) || defined(SONAR))
         #if defined(LOG_VALUES)
           BAROaltMax = 0;
         #endif

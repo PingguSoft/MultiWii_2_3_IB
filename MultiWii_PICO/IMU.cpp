@@ -293,7 +293,7 @@ uint8_t getEstimatedAltitude(){
     alt.EstAlt = (alt.EstAlt * 6 + BaroAlt * 2) >> 3; // additional LPF to reduce baro noise (faster by 30 夷뎤)
   #elif defined(SONAR) && !defined(BARO)  //sonar alone
     // LOG: for now, keep the last good reading and no more than max alt
-    if(sonarAlt <0 || sonarAlt> SONAR_MAX_HOLD)
+    if(sonarAlt < 0 || sonarAlt > SONAR_MAX_HOLD)
       sonarAlt = lastSonarAlt;
     else
       lastSonarAlt = sonarAlt;

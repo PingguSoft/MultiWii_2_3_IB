@@ -49,7 +49,7 @@ const char boxnames[] PROGMEM = // names for dynamic generation of config GUI
     "ANGLE;"
     "HORIZON;"
   #endif
-  #if (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+  #if (defined(BARO) || defined(SONAR)) && (!defined(SUPPRESS_BARO_ALTHOLD))
     "BARO;"
   #endif
   #ifdef VARIOMETER
@@ -100,7 +100,7 @@ const uint8_t boxids[] PROGMEM = {// permanent IDs associated to boxes. This way
     1, //"ANGLE;"
     2, //"HORIZON;"
   #endif
-  #if (BARO || SONAR) && (!defined(SUPPRESS_BARO_ALTHOLD))
+  #if (defined(BARO) || defined(SONAR)) && (!defined(SUPPRESS_BARO_ALTHOLD))
     3, //"BARO;"
   #endif
   #ifdef VARIOMETER
@@ -1103,7 +1103,7 @@ void loop () {
         #endif
       case 2:
         taskOrder++;
-        #if (BARO || SONAR)
+        #if (defined(BARO) || defined(SONAR))
           if (getEstimatedAltitude() !=0) break;
         #endif
       case 3:
@@ -1347,5 +1347,3 @@ void loop () {
   if ( (f.ARMED) || ((!calibratingG) && (!calibratingA)) ) writeServos();
   writeMotors();
 }
-
-
